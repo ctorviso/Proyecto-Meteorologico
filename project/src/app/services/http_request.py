@@ -1,5 +1,4 @@
 from typing import Any
-
 import requests
 import aiohttp
 import asyncio
@@ -25,7 +24,7 @@ def get_request_func(method: str, session: aiohttp.ClientSession):
 
     method_lower = method.lower()
     if method_lower not in request_map_async:
-        raise UnsupportedMethodError  # ✅ More informative error
+        raise UnsupportedMethodError
 
     return request_map_async[method_lower]
 
@@ -33,19 +32,27 @@ def get_request_func(method: str, session: aiohttp.ClientSession):
 def make_request(
     method: str,
     url: str,
+    response_format: str,
     **kwargs
 ) -> tuple[Any, int]:
 
-    method = request_map.get(method.lower())
-        
-    if not method:
+    if method not in request_map:
         raise UnsupportedMethodError(method)
+
+    method = request_map[method.lower()]
     
     try:
-        response = method(url, **kwargs)
+        response = method(url=url, **kwargs)
         response.raise_for_status()
-        
-        return response, response.status_code
+
+        if response_format == 'json':
+            return response.json(), response.status_code
+        elif response_format == 'text':
+            return response.text, response.status_code
+        elif response_format == 'content':
+            return response.content, response.status_code
+        else:
+            raise UnsupportedMethodError(response_format)
 
     except requests.exceptions.RequestException as req_err:
         print(f"Request failed: {req_err}")
@@ -93,8 +100,10 @@ async def make_request_async(
                     return await response.json(), response.status
                 elif response_format == 'text':
                     return await response.text(), response.status
-                else:
+                elif response_format == 'content':
                     return await response.read(), response.status
+                else:
+                    raise UnsupportedMethodError(response_format)
                 
         except aiohttp.ClientError as e:
             

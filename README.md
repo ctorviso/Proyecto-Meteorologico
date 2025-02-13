@@ -3,7 +3,6 @@
 
 ### Setup:
 ```sh
-cd project
 conda env create -f environment.yml
 conda activate proyecto_meteorologico
 ```

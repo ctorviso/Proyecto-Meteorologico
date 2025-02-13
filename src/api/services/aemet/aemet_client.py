@@ -1,5 +1,5 @@
 import aiohttp
-from app.services.http_request import make_request_async
+from src.api.services.http_request import make_request_async
 
 class AEMETClient:
 

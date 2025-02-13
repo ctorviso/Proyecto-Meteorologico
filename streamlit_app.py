@@ -6,8 +6,8 @@ def main():
     
     pages = {
         "Main": [
-            st.Page("Pages/Main/Dashboard.py", title="Dashboard"),
-            st.Page("Pages/Main/API Docs.py", title="API Docs")
+            st.Page("src/streamlit/Pages/Main/Dashboard.py", title="Dashboard"),
+            st.Page("src/streamlit/Pages/Main/API Docs.py", title="API Docs")
         ]
     }
 

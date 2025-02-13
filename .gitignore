@@ -113,14 +113,14 @@ ipython_config.py
 # pdm
 #   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
 #pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
+#   pdm stores src-wide configurations in .pdm.toml, but it is recommended to not include it
 #   in version control.
 #   https://pdm.fming.dev/latest/usage/project/#working-with-version-control
 .pdm.toml
 .pdm-python
 .pdm-build/
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-src/pdm
 __pypackages__/
 
 # Celery stuff
@@ -131,7 +131,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -139,11 +138,11 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# Spyder src settings
 .spyderproject
 .spyproject
 
-# Rope project settings
+# Rope src settings
 .ropeproject
 
 # mkdocs documentation

@@ -1,6 +1,6 @@
 import streamlit.components.v1 as components
 import streamlit as st
-from helpers import DEV_MODE
+from src.shared.helpers import DEV_MODE
 
 swagger_url = "http://localhost:8000/openapi.json"
 

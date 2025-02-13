@@ -2,8 +2,8 @@ from typing import Any
 import requests
 import aiohttp
 import asyncio
-from app.services.http_error import RequestFailedError, UnsupportedContentTypeError
-from app.services.http_error import error_map, retryable_exceptions, \
+from src.api.services.http_error import RequestFailedError, UnsupportedContentTypeError
+from src.api.services.http_error import error_map, retryable_exceptions, \
     UnsupportedMethodError, ClientError, MaximumRetriesError
 
 request_map = {

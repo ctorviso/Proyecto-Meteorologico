@@ -1,9 +1,9 @@
 import aiohttp
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join('..', 'project/src')))
-import helpers
-from app.services import http_request
+sys.path.append(os.path.abspath(os.path.join('..', 'src')))
+from src.shared import helpers
+from src.api.services import http_request
 from typing import Any
 
 def get_env_var(key: str) -> str:

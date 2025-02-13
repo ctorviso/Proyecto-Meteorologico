@@ -1,4 +1,4 @@
-from app.db.db_handler import DBHandler
+from src.db.db_handler import DBHandler
 from fastapi import APIRouter
 
 db = DBHandler()

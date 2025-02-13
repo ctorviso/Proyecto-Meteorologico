@@ -1,6 +1,6 @@
-from app.services.aemet.aemet_client import AEMETClient
+from src.api.services.aemet.aemet_client import AEMETClient
 from fastapi import APIRouter
-import helpers
+from src.shared import helpers
 
 client = AEMETClient(api_key=helpers.get_env_var("AEMET_API_KEY"))
 router = APIRouter()

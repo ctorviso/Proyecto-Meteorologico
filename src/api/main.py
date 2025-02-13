@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from app.routes import aemet_routes, db_routes
+from src.api.routes import aemet_routes
+from src.api.routes import db_routes
 
 app = FastAPI()
 

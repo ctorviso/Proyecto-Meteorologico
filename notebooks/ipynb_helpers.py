@@ -15,19 +15,16 @@ def replace_url_params(url, **kwargs) -> str:
 def make_request(
     method: str,
     url: str,
-    response_format: str,
     **kwargs
 ) -> tuple[Any, int]:
     return http_request.make_request(
         method=method,
         url=url,
-        response_format=response_format,
         **kwargs
     )
 
 async def make_request_async(
     method: str,
-    response_format: str,
     url: str,
     session: aiohttp.ClientSession,
     retries: int = 3,
@@ -36,7 +33,6 @@ async def make_request_async(
 ) -> tuple[Any, int]:
     return await http_request.make_request_async(
         method=method,
-        response_format=response_format,
         url=url,
         session=session,
         retries=retries,

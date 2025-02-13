@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from app.routes import aemet
+from app.routes import aemet_routes
 
 app = FastAPI()
 
@@ -16,4 +16,4 @@ app.add_middleware(
 def read_root():
     return {"Hello": "World"}
 
-app.include_router(aemet.maestro.router, prefix="/api/aemet/maestro")
+app.include_router(aemet_routes.router, prefix="/api/aemet")

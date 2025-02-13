@@ -11,3 +11,7 @@ dependencies:
   - uvicorn
   - streamlit
   - aiohttp
+  - requests
+  - sqlalchemy
+  - psycopg2
+  - asyncpg

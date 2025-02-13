@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 import helpers
 
 class DBHandler:
@@ -22,6 +22,12 @@ class DBHandler:
         except KeyError as e:
             raise ValueError(f"Missing environment variable: {str(e)}")
 
-        self.URL = f"postgresql+psycopg2://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DBNAME}?sslmode=require"
+        self.URL = f"postgresql+psycopg2://{self.USER}:{self.PASSWORD}@[{self.HOST}]:{self.PORT}/{self.DBNAME}?sslmode=require"
         self.engine = create_engine(self.URL)
 
+    def get_table_data(self, table_name: str):
+        query = text(f"SELECT * FROM {table_name}")
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+            rows = result.fetchall()
+            return rows

@@ -83,6 +83,13 @@ class ClientError(Exception):
         self.message = message
         super().__init__(f"Status Code: {self.status_code} - {self.message}")
 
+class UnsupportedContentTypeError(Exception):
+    """Exception raised when an unsupported content type is returned."""
+    def __init__(self, content_type):
+        self.content_type = content_type
+        self.message = f"Unsupported content type: {self.content_type}"
+        super().__init__(self.message)
+
 error_map = {
     401: InvalidAccessTokenError,
     403: ForbiddenError,
@@ -91,6 +98,7 @@ error_map = {
     500: InternalServerError,
     503: ServiceUnavailableError,
     504: GatewayTimeoutError,
+    505: RequestFailedError
 }
 
 retryable_exceptions =  {

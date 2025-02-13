@@ -2,7 +2,7 @@ from typing import Any
 import requests
 import aiohttp
 import asyncio
-from app.services.http_error import RequestFailedError
+from app.services.http_error import RequestFailedError, UnsupportedContentTypeError
 from app.services.http_error import error_map, retryable_exceptions, \
     UnsupportedMethodError, ClientError, MaximumRetriesError
 
@@ -32,7 +32,6 @@ def get_request_func(method: str, session: aiohttp.ClientSession):
 def make_request(
     method: str,
     url: str,
-    response_format: str,
     **kwargs
 ) -> tuple[Any, int]:
 
@@ -45,14 +44,16 @@ def make_request(
         response = method(url=url, **kwargs)
         response.raise_for_status()
 
-        if response_format == 'json':
+        content_type = response.headers.get("Content-Type", "").lower()
+
+        if content_type.startswith("application/json"):
             return response.json(), response.status_code
-        elif response_format == 'text':
-            return response.text, response.status_code
-        elif response_format == 'content':
-            return response.content, response.status_code
+        elif content_type.startswith("text"):
+            return response.text(), response.status_code
+        elif content_type.startswith("application/pdf"):
+            return response.read(), response.status_code
         else:
-            raise UnsupportedMethodError(response_format)
+            raise UnsupportedContentTypeError(content_type)
 
     except requests.exceptions.RequestException as req_err:
         print(f"Request failed: {req_err}")
@@ -64,7 +65,6 @@ def make_request(
 
 async def make_request_async(
     method: str,
-    response_format: str,
     url: str,
     session: aiohttp.ClientSession,
     retries: int = 3,
@@ -96,14 +96,16 @@ async def make_request_async(
                 if not (200 <= response.status < 300):
                     raise RequestFailedError(response.status, response.reason)
 
-                if response_format == 'json':
+                content_type = response.headers.get("Content-Type", "").lower()
+
+                if content_type.startswith("application/json"):
                     return await response.json(), response.status
-                elif response_format == 'text':
+                elif content_type.startswith("text"):
                     return await response.text(), response.status
-                elif response_format == 'content':
+                elif content_type.startswith("application/pdf"):
                     return await response.read(), response.status
                 else:
-                    raise UnsupportedMethodError(response_format)
+                    raise UnsupportedContentTypeError(content_type)
                 
         except aiohttp.ClientError as e:
             

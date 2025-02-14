@@ -1,3 +1,5 @@
+CREATE DATABASE datos_AEMET;
+
 CREATE TABLE ubicaciones (
   cod_estacion VARCHAR(10) NOT NULL PRIMARY KEY,
   estacion VARCHAR(100) NOT NULL,

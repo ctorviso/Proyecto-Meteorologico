@@ -1,30 +1,17 @@
-### Pre-requisitos:
-- [Conda](https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html)
+## 1. Obtain AEMET API key from https://opendata.aemet.es/centrodedescargas/obtencionAPIKey
 
-### Setup:
-```sh
-conda env create -f environment.yml
-conda activate proyecto_meteorologico
-```
+## 2. Rename '.env.example' to '.env' and enter your AEMET API key
 
-### Ejecución (UNIX):
+## 3. Create a virtual environment and install requirements.txt
+
+## 4. Run the application:
+
+### MacOS/Linux:
 ```sh
 ./run.sh
 ```
 
-### Ejecución (Windows):
+### Windows:
 ```sh
 run.bat
 ```
-
-### Notebooks:
-
-```sh
-conda install ipykernel
-python -m ipykernel install --user --name=proyecto_meteorologico
-```
-
-Obtain API key from https://opendata.aemet.es/centrodedescargas/
-
-Create .env file in root directory and add:
-```AEMET_API_KEY=your_api key```

@@ -1,12 +1,11 @@
 {
   "name": "Python 3",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   "customizations": {
     "codespaces": {
       "openFiles": [
         "README.md",
-        "project/src/streamlit_app/main.py"
+        "streamlit_app.py"
       ]
     },
     "vscode": {
@@ -17,17 +16,19 @@
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  "updateContentCommand": "chmod +x run.sh; if [ -f environment.yml ]; then conda env update --file environment.yml --name base; fi; echo '✅ Conda environment updated'",
   "postAttachCommand": {
-    "server": "streamlit run project/src/streamlit_app/main.py --server.enableCORS false --server.enableXsrfProtection false"
+    "server": "bash run.sh"
   },
   "portsAttributes": {
     "8501": {
-      "label": "Application",
+      "label": "Streamlit",
       "onAutoForward": "openPreview"
+    },
+    "8000": {
+      "label": "FastAPI",
+      "onAutoForward": "silent"
     }
   },
-  "forwardPorts": [
-    8501
-  ]
+  "forwardPorts": [8501, 8000]
 }

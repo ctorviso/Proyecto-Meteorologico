@@ -3,22 +3,31 @@
 import os
 from dotenv import load_dotenv, find_dotenv
 
-DEV_MODE = bool(find_dotenv())
-if DEV_MODE:
+if bool(find_dotenv()):
     load_dotenv()
+    DEV_MODE = os.getenv('DEV') == 'true'
+else:
+    DEV_MODE = False
+
+try:
+    import streamlit as st
+    STREAMLIT_MODE = 'secrets' in st.__dict__ and bool(st.secrets)
+except (FileNotFoundError, ImportError):
+    STREAMLIT_MODE = False
 
 def get_env_var(key: str) -> str:
     """Retrieve environment variable from .env (dev) or Streamlit secrets (prod)."""
-    if DEV_MODE:
-        value = os.getenv(key)
-        if value is None:
-            raise ValueError(f"Error: {key} not found in .env file")
-    else:
+
+    if STREAMLIT_MODE:
         try:
-            import streamlit as st
             value = st.secrets[key]
         except KeyError:
             raise ValueError(f"Error: {key} not found in Streamlit secrets")
+
+    else:
+        value = os.getenv(key)
+        if value is None:
+            raise ValueError(f"Error: {key} not found in .env file")
 
     return value
 

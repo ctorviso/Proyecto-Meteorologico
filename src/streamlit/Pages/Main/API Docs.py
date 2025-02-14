@@ -1,8 +1,15 @@
 import streamlit.components.v1 as components
 import streamlit as st
-from src.shared.helpers import DEV_MODE
+from src.shared.helpers import DEV_MODE, get_env_var
 
-swagger_url = "http://localhost:8000/openapi.json"
+if DEV_MODE:
+    docs_url = 'http://localhost:8000/docs'
+    swagger_url = "http://localhost:8000/openapi.json"
+else:
+    docs_url = f'https://{get_env_var("HEROKU_APP")}.herokuapp.com/docs'
+    swagger_url = f'https://{get_env_var("HEROKU_APP")}.herokuapp.com/openapi.json'
+
+st.link_button('Documentación API', docs_url)
 
 swagger_html = f"""
 <html>
@@ -41,9 +48,5 @@ swagger_html = f"""
   </body>
 </html>
 """
-
-if DEV_MODE:
-    docs_url = 'http://localhost:8000/docs'
-    st.link_button('Documentación API', docs_url)
 
 components.html(swagger_html, height=900, scrolling=True)

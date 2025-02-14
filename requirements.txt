@@ -1,0 +1,11 @@
+python-dotenv
+numpy
+pandas
+fastapi
+uvicorn
+streamlit
+aiohttp
+requests
+sqlalchemy
+psycopg2-binary
+asyncpg

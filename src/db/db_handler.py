@@ -26,8 +26,17 @@ class DBHandler:
         self.URL = f"postgresql+psycopg2://{self.USER}:{self.PASSWORD}@[{self.HOST}]:{self.PORT}/{self.DBNAME}?sslmode=require"
         self.engine = create_engine(self.URL)
 
+    def insert_data(self, table_name: str, data: dict):
+        '''Inserta datos en una tabla de la base de datos'''
+        query = text(f"INSERT INTO {table_name} (name) VALUES (:name)")
+        with self.engine.connect() as connection:
+            connection.execute(query, **data)
+
     def get_table_data(self, table_name: str):
+        '''Consulta de datos de una tabla en la base de datos'''
         query = text(f"SELECT * FROM {table_name}")
         with self.engine.connect() as connection:
             result = connection.execute(query)
             return [{"id": row[0], "name": row[1]} for row in result]
+    
+    

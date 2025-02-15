@@ -64,3 +64,16 @@ def get_param_names(path: str) -> list[str]:
         params.append(param_name)
 
     return params
+
+# --- Miscellaneous --- #
+
+from datetime import datetime
+
+def format_fecha(fecha_str):
+    meses = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+    ]
+
+    dt = datetime.strptime(fecha_str, "%Y-%m-%dT%H:%M:%S")
+    return f"{dt.day} {meses[dt.month - 1]} {dt.year}"

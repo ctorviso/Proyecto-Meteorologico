@@ -1,3 +1,5 @@
+import json
+
 import aiohttp
 from src.api.services.http_request import make_request_async
 
@@ -9,9 +11,11 @@ class AEMETClient:
         'maestro': {
             'municipio': '/maestro/municipio/{municipio_id}'
         },
-
         'observacion-convencional': {
             'tiempo-actual': '/observacion/convencional/datos/estacion/{idema}'
+        },
+        'predicciones-especificas': {
+            'municipio-horaria': '/prediccion/especifica/municipio/horaria/{municipio}'
         }
     }
 
@@ -19,7 +23,7 @@ class AEMETClient:
         self._api_key = api_key
         self._headers = {'api_key': api_key}
 
-    async def make_request(self, endpoint: str, **kwargs):
+    async def _make_request(self, endpoint: str, **kwargs):
         url = self.BASE_URL + endpoint.format(**kwargs)
 
         async with aiohttp.ClientSession() as session:
@@ -32,3 +36,19 @@ class AEMETClient:
                 'datos': datos,
                 'metadatos': metadatos
             }
+
+    async def get_predicciones_municipio(self, municipio: str):
+        endpoint = self.ENDPOINTS['predicciones-especificas']['municipio-horaria']
+        response = await self._make_request(endpoint.format(municipio=municipio))
+
+        return json.loads(response['datos'][0])[0]['prediccion']['dia']
+
+    async def get_estacion_data(self, idema: str):
+        endpoint = self.ENDPOINTS['observacion-convencional']['tiempo-actual']
+        response = await self._make_request(endpoint.format(idema=idema))
+
+        return json.loads(response['datos'][0])
+
+    async def get_municipio(self, municipio_id: str):
+        endpoint = self.ENDPOINTS['maestro']['municipio']
+        return await self._make_request(endpoint, municipio_id=municipio_id)

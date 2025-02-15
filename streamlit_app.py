@@ -9,8 +9,9 @@ def main():
             st.Page("src/streamlit/Pages/Main/Dashboard.py", title="Welcome"),
             st.Page("src/streamlit/Pages/Main/API Docs.py", title="API Docs")
         ],
-        "AEMET": [
-            st.Page("src/streamlit/Pages/AEMET/Live Data.py", title="Dashboard")
+        "AEMET Live": [
+            st.Page("src/streamlit/Pages/AEMET Live/Estacion.py", title="Estación"),
+            st.Page("src/streamlit/Pages/AEMET Live/Municipio.py", title="Municipio")
         ],
     }
 

@@ -7,10 +7,12 @@ router = APIRouter()
 
 @router.get("/municipio/{municipio_id}")
 async def get_municipio(municipio_id: str):
-    endpoint = client.ENDPOINTS['maestro']['municipio']
-    return await client.make_request(endpoint, municipio_id=municipio_id)
+    return await client.get_municipio(municipio_id)
 
-@router.get("/tiempo-actual/{idema}")
-async def get_tiempo_actual(idema: str):
-    endpoint = client.ENDPOINTS['observacion-convencional']['tiempo-actual']
-    return await client.make_request(endpoint, idema=idema)
+@router.get("/tiempo-actual/estacion/{idema}")
+async def get_tiempo_actual_estacion(idema: str):
+    return await client.get_estacion_data(idema)
+
+@router.get("/tiempo-actual/municipio/{municipio}")
+async def get_tiempo_actual_municipio(municipio: str):
+    return await client.get_predicciones_municipio(municipio)

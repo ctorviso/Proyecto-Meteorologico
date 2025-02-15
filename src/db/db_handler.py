@@ -30,5 +30,4 @@ class DBHandler:
         query = text(f"SELECT * FROM {table_name}")
         with self.engine.connect() as connection:
             result = connection.execute(query)
-            rows = result.fetchall()
-            return rows
+            return [{"id": row[0], "name": row[1]} for row in result]

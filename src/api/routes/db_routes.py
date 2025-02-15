@@ -4,7 +4,7 @@ from fastapi import APIRouter
 db = DBHandler()
 router = APIRouter()
 
-table_names = ["temperatura", "humedad", "viento", "presion", "precipitaciones", "ubicaciones"]
+table_names = ["estaciones", "provincias"]
 
 # Dynamic route creation
 for table in table_names:

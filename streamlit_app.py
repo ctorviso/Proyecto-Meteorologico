@@ -6,9 +6,12 @@ def main():
     
     pages = {
         "Main": [
-            st.Page("src/streamlit/Pages/Main/Dashboard.py", title="Dashboard"),
+            st.Page("src/streamlit/Pages/Main/Dashboard.py", title="Welcome"),
             st.Page("src/streamlit/Pages/Main/API Docs.py", title="API Docs")
-        ]
+        ],
+        "AEMET": [
+            st.Page("src/streamlit/Pages/AEMET/Live Data.py", title="Dashboard")
+        ],
     }
 
     pg = st.navigation(pages)

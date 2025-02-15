@@ -10,7 +10,9 @@ class AEMETClient:
             'municipio': '/maestro/municipio/{municipio_id}'
         },
 
-        # TODO: Add necessary endpoints
+        'observacion-convencional': {
+            'tiempo-actual': '/observacion/convencional/datos/estacion/{idema}'
+        }
     }
 
     def __init__(self, api_key: str):

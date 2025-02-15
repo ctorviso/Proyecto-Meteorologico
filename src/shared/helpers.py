@@ -49,3 +49,18 @@ def combine_url_params(url: str, params: dict) -> str:
     separator = "&" if parsed.query else "?"
 
     return f"{url}{separator}{urlencode(params)}"
+
+
+def get_param_names(path: str) -> list[str]:
+    params = []
+    parts = path.split("{")
+
+    for part in parts[1:]:
+        if "}" not in part:
+            raise ValueError(f"Malformed path - unclosed parameter bracket in {path}")
+        param_name = part.split("}")[0]
+        if not param_name:
+            raise ValueError(f"Empty parameter name in {path}")
+        params.append(param_name)
+
+    return params

@@ -1,7 +1,7 @@
 import aiohttp
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join('..', 'src')))
+sys.path.append('..')
 from src.shared import helpers
 from src.api.services import http_request
 from typing import Any
@@ -39,3 +39,27 @@ async def make_request_async(
         delay=delay,
         **kwargs
     )
+
+def convert_latitude(lat):
+    
+    # Extract degrees and minutes
+    degrees = int(lat[:-5])  # First 4 digits are degrees
+    minutes = int(lat[-5:-3])  # Last 2 digits are minutes
+    
+    # Convert to decimal degrees
+    latitude_decimal = degrees + minutes / 60.0
+    if lat[-1] == 'S':  # If South, make negative
+        latitude_decimal = -latitude_decimal
+    return latitude_decimal
+
+def convert_longitude(lon):
+    
+    # Extract degrees and minutes
+    degrees = int(lon[:-5])  # First 4 digits are degrees
+    minutes = int(lon[-5:-3])  # Last 2 digits are minutes
+    
+    # Convert to decimal degrees
+    longitude_decimal = degrees + minutes / 60.0
+    if lon[-1] == 'W':  # If West, make it negative
+        longitude_decimal = -longitude_decimal
+    return longitude_decimal

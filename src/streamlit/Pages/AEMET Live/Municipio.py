@@ -2,27 +2,19 @@ import streamlit as st
 import pandas as pd
 from src.api.services import http_request
 from src.shared import helpers
-from src.streamlit.config import aemet_url, db_url
+from src.streamlit.config import aemet_url, com_names, provincias, municipios, \
+    comunidad_lookup, provincia_lookup, municipio_lookup
 
-comunidades_url = db_url + "/comunidades_autonomas"
-comunidades = http_request.make_request(url=comunidades_url, method='get')[0]
-com_names = [comunidad['nombre'] for comunidad in comunidades]
-com_ids = [comunidad['id'] for comunidad in comunidades]
 comunidad = st.selectbox("Selecciona la comunidad autónoma", com_names)
-com_id = com_ids[com_names.index(comunidad)]
+com_id = comunidad_lookup[comunidad]
 
-provincias_url = db_url + "/provincias"
-provincias = http_request.make_request(url=provincias_url, method='get')[0]
-prov_names = [provincia['nombre'] for provincia in provincias if provincia['com_auto_id'] == com_id]
-prov_ids = [provincia['id'] for provincia in provincias if provincia['com_auto_id'] == com_id]
+prov_names = [provincias[index]["nombre"] for index in provincias if str(provincias[index]["com_auto_id"]) == com_id]
 provincia = st.selectbox("Selecciona la provincia", prov_names)
+prov_id = provincia_lookup[provincia]
 
-municipios_url = db_url + "/municipios"
-municipios = http_request.make_request(url=municipios_url, method='get')[0]
-mun_names = [municipio['nombre'] for municipio in municipios if municipio['provincia_id'] == prov_ids[prov_names.index(provincia)]]
-mun_ids = [municipio['id'] for municipio in municipios if municipio['provincia_id'] == prov_ids[prov_names.index(provincia)]]
+mun_names = [municipios[index]["nombre"] for index in municipios if str(municipios[index]["provincia_id"]) == prov_id]
 municipio = st.selectbox("Selecciona el municipio", mun_names)
-municipio_id = mun_ids[mun_names.index(municipio)]
+municipio_id = municipio_lookup[municipio]
 
 municipio_endpoint = "/tiempo-actual/municipio/{municipio}"
 

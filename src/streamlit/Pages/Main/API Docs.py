@@ -1,13 +1,9 @@
 import streamlit.components.v1 as components
 import streamlit as st
-from src.shared.helpers import DEV_MODE, get_env_var
+from src.streamlit.config import api_url
 
-if DEV_MODE:
-    docs_url = 'http://localhost:8000/docs'
-    swagger_url = "http://localhost:8000/openapi.json"
-else:
-    docs_url = f'https://{get_env_var("HEROKU_APP")}.herokuapp.com/docs'
-    swagger_url = f'https://{get_env_var("HEROKU_APP")}.herokuapp.com/openapi.json'
+docs_url = f'{api_url}/docs'
+swagger_url = f'{api_url}/openapi.json'
 
 st.link_button('Documentación API', docs_url)
 
@@ -18,11 +14,11 @@ swagger_html = f"""
     <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <style>
       #swagger-ui {{
-        background-color: #f0f0f0;  /* Background color */
+        background-color: #f0f0f0;
         padding: 20px;
         border-radius: 8px;
-        height: 100%;  /* Allow it to expand vertically */
-        overflow: auto;  /* Make it scrollable if content overflows */
+        height: 100%;
+        overflow: auto;
       }}
       body {{
         margin: 0;

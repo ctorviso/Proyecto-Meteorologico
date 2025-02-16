@@ -1,14 +1,15 @@
 import json
-from src.shared.helpers import get_env_var
+from src.shared.helpers import get_env_var, DEV_MODE
 
-host = get_env_var("HOST")
+api_host = get_env_var("API_HOST")
 
-if host == "localhost":
-    aemet_url = f"http://{host}:8000/api/aemet"
-    db_url = f"http://{host}:8000/api/db"
+if DEV_MODE:
+    api_port = get_env_var("API_PORT")
+    api_url = f"http://{api_host}:{api_port}/api"
 else:
-    aemet_url = f"https://{host}/api/aemet"
-    db_url = f"https://{host}/api/db"
+    api_url = f"https://{api_host}/api"
+
+aemet_url = f"{api_url}/aemet"
 
 with open('src/streamlit/data/comunidades.json') as f:
     comunidades = json.load(f)

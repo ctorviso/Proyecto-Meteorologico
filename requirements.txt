@@ -9,3 +9,5 @@ requests
 sqlalchemy
 psycopg2-binary
 asyncpg
+folium
+streamlit-folium

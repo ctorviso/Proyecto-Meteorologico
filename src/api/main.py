@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from src.api.routes import aemet_routes
 from fastapi.middleware.cors import CORSMiddleware
 from src.api.routes import db_routes
 from src.shared.helpers import get_env_var, DEV_MODE
@@ -39,5 +38,4 @@ def read_root():
         "Docs": f"{api_url}/docs"
     }
 
-app.include_router(aemet_routes.router, prefix="/api/aemet")
 app.include_router(db_routes.router, prefix="/api/db")

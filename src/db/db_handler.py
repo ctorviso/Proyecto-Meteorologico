@@ -37,3 +37,11 @@ class DBHandler:
         with self.engine.connect() as connection:
             result = connection.execute(query)
             return [dict(zip(result.keys(), row)) for row in result]
+
+    def get_estacion_historico(self, elemento: str, idema: str, fechaIni: str, fechaFin: str):
+        table_name = f"{elemento}_historico"
+        query = text(f"SELECT * FROM {table_name} WHERE idema = :idema AND fecha BETWEEN :fechaIni AND :fechaFin")
+
+        with self.engine.connect() as connection:
+            result = connection.execute(query, {"idema": idema, "fechaIni": fechaIni, "fechaFin": fechaFin})
+            return [dict(zip(result.keys(), row)) for row in result]

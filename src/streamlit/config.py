@@ -9,18 +9,16 @@ if DEV_MODE:
 else:
     api_url = f"https://{api_host}/api"
 
-aemet_url = f"{api_url}/aemet"
-
-with open('src/streamlit/data/comunidades.json') as f:
+with open('data/locations/comunidades.json') as f:
     comunidades = json.load(f)
 
-with open('src/streamlit/data/provincias.json') as f:
+with open('data/locations/provincias.json') as f:
     provincias = json.load(f)
 
-with open('src/streamlit/data/municipios.json') as f:
+with open('data/locations/municipios.json') as f:
     municipios = json.load(f)
 
-with open('src/streamlit/data/estaciones.json') as f:
+with open('data/locations/estaciones.json') as f:
     estaciones = json.load(f)
 
 com_ids = comunidades.keys()

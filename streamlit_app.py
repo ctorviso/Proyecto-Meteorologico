@@ -5,13 +5,12 @@ st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:
 def main():
     
     pages = {
-        "Main": [
+        "Principal": [
             st.Page("src/streamlit/Pages/Main/Dashboard.py", title="Welcome"),
             st.Page("src/streamlit/Pages/Main/API Docs.py", title="API Docs")
         ],
-        "AEMET Live": [
-            st.Page("src/streamlit/Pages/AEMET Live/Estacion.py", title="Estación"),
-            st.Page("src/streamlit/Pages/AEMET Live/Municipio.py", title="Municipio")
+        "Histórico": [
+            st.Page("src/streamlit/Pages/Historical/Estacion.py", title="Estación"),
         ],
     }
 

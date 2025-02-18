@@ -16,3 +16,15 @@ for table in table_names:
         return route_handler
 
     router.add_api_route(route, make_route(table), methods=["GET"])
+
+elements = ["lluvia", "temperatura", "viento", "humedad"]
+
+for elemento in elements:
+    route = f"/historico/estacion/{{idema}}/{elemento}/rango/{{fecha_ini}}/{{fecha_fin}}"
+
+    def make_route(element_name: str):
+        def route_handler(idema: str, fecha_ini: str, fecha_fin: str):
+            return db.get_estacion_historico(element_name, idema, fecha_ini, fecha_fin)
+        return route_handler
+
+    router.add_api_route(route, make_route(elemento), methods=["GET"])

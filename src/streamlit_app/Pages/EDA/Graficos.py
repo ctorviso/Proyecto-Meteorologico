@@ -5,7 +5,8 @@ import plotly.express as px
 import streamlit as st
 from streamlit_folium import folium_static
 from helpers.lookups import locations_df, element_cols_map, label_maps, color_maps
-from helpers.maps.folium import spain_map, add_to_map
+from helpers.maps.folium import spain_map, create_tooltip, get_column_choropleth, set_map_bounds
+from helpers.maps.geojson import inject_col_values
 from helpers.preprocessing import provincia_avg
 from helpers.visualization import histograma
 from helpers import api
@@ -83,21 +84,26 @@ def graficar_scatter_matrix():
         st.error("No se pueden visualizar todas las variables en el Scatter Matrix.")
 
 def mapa_coropletico():
-    st.header("Mapa Coroplético de la temperatura media por provincia")
+    st.header(f"Mapa Coroplético")
 
     st.write("Selecciona el elemento:")
     elemento = element_filter()
 
     if elemento:
+        st.write(f"Mapa Coroplético de {elemento} por provincia")
+
         data = api.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
         df = pd.DataFrame(data)
         avg_df = provincia_avg(df, elemento)
 
-        cols = element_cols_map[elemento]
-        mapa = spain_map()
+        geojson = inject_col_values(avg_df, element_cols_map[elemento])
 
-        for col in cols:
-            add_to_map(mapa, avg_df, col, label_maps[col], color_maps[col])
+        mapa = spain_map()
+        set_map_bounds(mapa, geojson)
+
+        for col in element_cols_map[elemento]:
+            choro = get_column_choropleth(geojson, avg_df, col, label_maps[col], color_maps[col]).add_to(mapa)
+            create_tooltip(col, label_maps[col]).add_to(choro.geojson)
 
         folium.LayerControl().add_to(mapa)
         folium_static(mapa)

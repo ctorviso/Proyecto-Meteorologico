@@ -48,3 +48,15 @@ geodata_provincias = {
     "type": "FeatureCollection",
     "features": combine_features()
 }
+
+
+def inject_col_values(df, cols):
+    geodata = geodata_provincias.copy()
+    for feature in geodata['features']:
+        provincia_id = feature['properties']['provincia_id']
+        matching_rows = df[df['provincia_id'] == provincia_id]
+        row = matching_rows.iloc[0]
+        for col in cols:
+            feature['properties'][col] = row[col]
+
+    return geodata

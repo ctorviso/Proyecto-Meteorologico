@@ -1,7 +1,6 @@
 from datetime import datetime
 import pandas as pd
 import numpy as np
-
 from helpers.lookups import element_cols_map, locations_df
 
 
@@ -278,10 +277,10 @@ def provincia_avg(df, element: str):
     """
 
     # Add provincia_id
-    df = df.merge(locations_df[['idema', 'provincia_id']], on='idema', how='left')
+    df = df.merge(locations_df[['idema', 'provincia_id', 'provincia']], on='idema', how='left')
 
     # Filter necessary columns
-    cols = element_cols_map[element] + ['provincia_id']
+    cols = element_cols_map[element] + ['provincia_id', 'provincia']
     df = df[cols]
 
     # Convert provincia_id to string
@@ -290,4 +289,8 @@ def provincia_avg(df, element: str):
     df = convert_numeric(df, element_cols_map[element])
 
     # Return df of provincia means
-    return df.groupby('provincia_id').mean().reset_index()
+    return df.groupby('provincia_id').agg({
+        'provincia': 'first',  # Retain the first (or last) 'nombre provincia' per group
+        **{col: 'mean' for col in df.select_dtypes(include=['number']).columns if col != 'provincia_id'}
+    }).reset_index()
+

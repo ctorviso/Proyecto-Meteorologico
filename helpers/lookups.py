@@ -65,7 +65,7 @@ label_maps = {
 }
 
 color_maps = {
-    'tmed': "Reds",
+    'tmed': "RdYlBu_r",
     'tmin': "Blues",
     'tmax': "YlOrRd",
     'prec': "Blues",

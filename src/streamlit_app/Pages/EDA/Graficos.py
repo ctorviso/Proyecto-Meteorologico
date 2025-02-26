@@ -8,12 +8,10 @@ from helpers.lookups import locations_df, element_cols_map, label_maps, color_ma
 from helpers.maps.folium import spain_map, add_to_map
 from helpers.preprocessing import provincia_avg
 from helpers.visualization import histograma
-from src.db.db_handler import DBHandler
+from helpers import api
 from src.streamlit_app.components.filters import date_range_filter, element_filter
 
 st.title("Análisis Exploratorio de Datos")
-
-db = DBHandler()
 
 fecha_inicial, fecha_final = date_range_filter()
 
@@ -40,7 +38,7 @@ def graficar_histogramas():
 
     if elemento:
         columna = element_cols_map[elemento][0]
-        data = db.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
+        data = api.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
         df = pd.DataFrame(data).merge(locations_df, on="idema", how="left").sort_values("fecha")
 
         if columna in df.columns:
@@ -58,12 +56,12 @@ def graficar_scatter_matrix():
     st.header("Scatter Matrix")
     
     dfs = []
-    element_vars = [v[0] for v in element_cols_map.values()]
+    element_col = [v[0] for v in element_cols_map.values()]
 
-    for element, var in element_cols_map.items():
+    for element, col in element_cols_map.items():
 
-        data = db.get_estaciones_historico_rango(element, fecha_inicial, fecha_final)
-        df_var = pd.DataFrame(data)[['idema', 'fecha', var[0]]]
+        data = api.get_estaciones_historico_rango(element, fecha_inicial, fecha_final)
+        df_var = pd.DataFrame(data)[['idema', 'fecha', col[0]]]
         dfs.append(df_var)
     
     df_merged_vars = reduce(
@@ -72,8 +70,8 @@ def graficar_scatter_matrix():
     )
     df_merged = df_merged_vars.merge(locations_df, on="idema", how="left")
 
-    if all(var in df_merged.columns for var in element_vars):
-        fig_scatter = px.scatter_matrix(df_merged, dimensions=element_vars)
+    if all(var in df_merged.columns for var in element_col):
+        fig_scatter = px.scatter_matrix(df_merged, dimensions=element_col)
         fig_scatter.update_traces(marker=dict(color="purple", size=6, opacity=0.7))
         fig_scatter.update_layout(
             title="Scatter Matrix de Variables Meteorológicas",
@@ -91,7 +89,7 @@ def mapa_coropletico():
     elemento = element_filter()
 
     if elemento:
-        data = db.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
+        data = api.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
         df = pd.DataFrame(data)
         avg_df = provincia_avg(df, elemento)
 

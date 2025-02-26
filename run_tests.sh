@@ -2,11 +2,6 @@
 
 echo "Running tests..."
 
-if [ ! -f .env ]; then
-  echo "ERROR: .env file not found!"
-  exit 1
-fi
-
 set -e
 
 set -o allexport

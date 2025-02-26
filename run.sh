@@ -2,6 +2,11 @@
 
 mkdir -p logs
 
+if [ ! -f .env ]; then
+  echo "ERROR: .env file not found!"
+  exit 1
+fi
+
 ./run_tests.sh
 
 echo "Starting FastAPI..."

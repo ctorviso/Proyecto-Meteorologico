@@ -2,6 +2,8 @@ import os
 import toml
 from dotenv import load_dotenv, find_dotenv
 
+script_dir = os.path.dirname(os.path.realpath(__file__))
+
 if bool(find_dotenv()):
     load_dotenv()
     DEV_MODE = os.getenv('DEV') == 'true'

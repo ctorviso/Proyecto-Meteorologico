@@ -27,7 +27,7 @@ def estacion_filter():
 def date_range_filter():
     last_week = pd.Timestamp.now() - pd.DateOffset(weeks=2)
 
-    _, ini, _, fin, _ = st.columns([2, 5, 2, 5, 2])
+    ini, _, fin, _ = st.columns([2,1,2,1])
 
     with ini:
         fecha_ini = str(
@@ -41,38 +41,17 @@ def date_range_filter():
     return fecha_ini, fecha_fin
 
 
-def element_filter():
+def element_filter(selection_mode: str = "single"):
+
     elements = ["lluvia", "temperatura", "viento", "humedad"]
 
-    st.markdown("<br><p style='text-align: center;'>Selecciona los elementos a visualizar:</h3>",
-                unsafe_allow_html=True)
     container = st.container()
     with container:
         selection = st.pills(
             "Elementos",
             options=elements,
-            selection_mode="multi",
+            selection_mode=selection_mode,
             label_visibility="collapsed"
         )
-
-    container.markdown(
-        """
-        <style>
-            [data-testid="stPillsFlex"] {
-                justify-content: center;
-                padding: 0 -10rem;
-            }
-            div.stButtonGroup {
-                display: flex;
-                justify-content: center;
-            }
-            
-            div[aria-label="Button group"] {
-                justify-content: center;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
 
     return selection

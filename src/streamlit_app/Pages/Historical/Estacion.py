@@ -24,7 +24,7 @@ with st.columns([1, 3, 1])[1]:
 
 with st.columns([1, 3, 1])[1]:
     st.plotly_chart(fig, use_container_width=True)
-    selected_elements = filters.element_filter()
+    selected_elements = filters.element_filter(selection_mode="multi")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -64,7 +64,7 @@ def show_data():
 def fetch_historical():
     _data = {}
     for element in elements:
-        _data[element] = api.get_estaciones_historico(element, fecha_ini, fecha_fin)
+        _data[element] = api.get_estaciones_historico_rango(element, fecha_ini, fecha_fin)
     st.session_state[f"{TAG}_data"] = _data
 
 

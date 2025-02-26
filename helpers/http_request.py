@@ -27,7 +27,7 @@ def get(url: str, max_retries=3, **kwargs):
             latest_error = e.status_code
             logger.error(f"Error {e.status_code} in GET request to {url}. Attempt {attempt + 1} of {max_retries}")
             sleep(2 ** attempt)  # Exponential backoff
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             logger.error(f"Error in GET request to {url}: {e}")
             return None, 500
     logger.error(f"Failed GET request to {url} after {max_retries} attempts")

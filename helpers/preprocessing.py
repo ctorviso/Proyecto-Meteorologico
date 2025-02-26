@@ -2,6 +2,8 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 
+from helpers.lookups import element_cols_map, locations_df
+
 
 def format_fecha(fecha_str: str, _format: str = "%Y-%m-%d") -> str:
     """
@@ -257,3 +259,35 @@ def remove_nans(
                     df_clean = df_clean.dropna(subset=[column])
 
     return df_clean
+
+def convert_numeric(df: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
+    """Converts columnas of a DataFrame to inferred numeric type."""
+    for col in columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    return df
+
+def provincia_avg(df, element: str):
+    """For use in choropleth maps
+        This function does the following:
+        - Filters the DataFrame to only include the necessary columns for the choropleth map
+        - Converts the 'provincia_id' column to string for combining with geojson
+        - Converts the rest of the columns to numeric for averaging
+        - Adds 'provincia_id' by merging with locations_df
+        - Groups by 'provincia_id' and calculates the mean of each column
+        - Returns the resulting DataFrame with the mean values for each provincia
+    """
+
+    # Add provincia_id
+    df = df.merge(locations_df[['idema', 'provincia_id']], on='idema', how='left')
+
+    # Filter necessary columns
+    cols = element_cols_map[element] + ['provincia_id']
+    df = df[cols]
+
+    # Convert provincia_id to string
+    df['provincia_id'] = df['provincia_id'].astype(str)
+    # Convert the rest to numeric
+    df = convert_numeric(df, element_cols_map[element])
+
+    # Return df of provincia means
+    return df.groupby('provincia_id').mean().reset_index()

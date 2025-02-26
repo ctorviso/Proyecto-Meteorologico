@@ -1,110 +1,79 @@
-import sys
-import streamlit as st
-import pandas as pd
-import unidecode
-import plotly.express as px
 from functools import reduce
-
-sys.path.append('../..')
-
-from src.db.db_handler import DBHandler
+import folium
+import pandas as pd
+import plotly.express as px
+import streamlit as st
+from streamlit_folium import folium_static
+from helpers.lookups import locations_df, element_cols_map, label_maps, color_maps
+from helpers.maps.folium import spain_map, add_to_map
+from helpers.preprocessing import provincia_avg
 from helpers.visualization import histograma
-from helpers.coropleth_map import unificar_geojson_provincias, merge_geojson_provincias, crear_mapa_choropleth
-from streamlit_folium import st_folium
+from src.db.db_handler import DBHandler
+from src.streamlit_app.components.filters import date_range_filter, element_filter
 
+st.title("Análisis Exploratorio de Datos")
 
-from src.streamlit_app.components.filters import select_variable, select_date
+db = DBHandler()
+
+fecha_inicial, fecha_final = date_range_filter()
 
 def show_graficos():
-    st.title("Análisis Exploratorio de Datos")
-    
+    options = ["Histogramas", "Scatter Matrix", "Mapa Coroplético"]
 
-    opcion = select_variable(
-        ["Histogramas", "Scatter Matrix", "Mapa Coroplético"],
+    opcion = st.radio(
+        options=options,
         label="Selecciona la visualización:"
     )
-    
-    if opcion == "Histogramas":
+
+    if opcion == options[0]:
         graficar_histogramas()
-    elif opcion == "Scatter Matrix":
+    elif opcion == options[1]:
         graficar_scatter_matrix()
-    elif opcion == "Mapa Coroplético":
+    elif opcion == options[2]:
         mapa_coropletico()
 
 def graficar_histogramas():
     st.header("Histogramas")
-    
-    db = DBHandler()
-    df_estaciones = pd.DataFrame(db.get_table("estaciones"))
-    df_provincias = pd.DataFrame(db.get_table("provincias"))
-    
 
-    variables_histograma = {
-        "Temperatura Media (°C)": ("temperatura", "temperatura_historico", "tmed"),
-        "Velocidad Media del Viento (m/s)": ("viento", "viento_historico", "velmedia"),
-        "Precipitaciones (mm)": ("lluvia", "lluvia_historico", "prec"),
-        "Humedad Relativa Media (%)": ("humedad", "humedad_historico", "hr_media")
-    }
-    
+    st.write("Selecciona el elemento:")
+    elemento = element_filter()
 
-    variable_seleccionada = select_variable(
-        list(variables_histograma.keys()),
-        label="Selecciona una variable:"
-    )
-    elemento, tabla, columna = variables_histograma[variable_seleccionada]
-    
-    fecha_inicial = db.get_earliest_historical_date(tabla)
-    fecha_fin = db.get_latest_historical_date(tabla)
-    data = db.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_fin)
-    
-    df = pd.DataFrame(data).merge(df_estaciones, on="idema", how="left").merge(
-        df_provincias, left_on="provincia_id", right_on="id", how="left", suffixes=("_est", "_prov")
-    ).sort_values("fecha")
-    
-    if columna in df.columns:
-        fig = histograma(
-            df,
-            title=f"Histograma de {variable_seleccionada}",
-            col=columna,
-            x_label=variable_seleccionada
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.error(f"La columna {columna} no está disponible en los datos.")
+    if elemento:
+        columna = element_cols_map[elemento][0]
+        data = db.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
+        df = pd.DataFrame(data).merge(locations_df, on="idema", how="left").sort_values("fecha")
+
+        if columna in df.columns:
+            fig = histograma(
+                df,
+                title=f"Histograma de {label_maps[columna]}",
+                col=columna,
+                x_label=columna
+            )
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.error(f"La columna {columna} no está disponible en los datos.")
 
 def graficar_scatter_matrix():
     st.header("Scatter Matrix")
     
-    db = DBHandler()
-    df_estaciones = pd.DataFrame(db.get_table("estaciones"))
-    df_provincias = pd.DataFrame(db.get_table("provincias"))
-    
-    variables_info = {
-        "tmed": ("temperatura", "temperatura_historico"),
-        "velmedia": ("viento", "viento_historico"),
-        "prec": ("lluvia", "lluvia_historico"),
-        "hrMedia": ("humedad", "humedad_historico")
-    }
-    
     dfs = []
-    for var, (elemento, tabla) in variables_info.items():
-        fecha_inicial = db.get_earliest_historical_date(tabla)
-        fecha_final = db.get_latest_historical_date(tabla)
-        data = db.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
-        df_var = pd.DataFrame(data)[['idema', 'fecha', var]]
+    element_vars = [v[0] for v in element_cols_map.values()]
+
+    for element, var in element_cols_map.items():
+
+        data = db.get_estaciones_historico_rango(element, fecha_inicial, fecha_final)
+        df_var = pd.DataFrame(data)[['idema', 'fecha', var[0]]]
         dfs.append(df_var)
     
     df_merged_vars = reduce(
         lambda left, right: pd.merge(left, right, on=['idema', 'fecha'], how='outer'),
         dfs
     )
-    df_merged = df_merged_vars.merge(df_estaciones, on="idema", how="left").merge(
-        df_provincias, left_on="provincia_id", right_on="id", how="left", suffixes=("_est", "_prov")
-    )
-    
-    variables = ["tmed", "velmedia", "prec", "hrMedia"]
-    if all(var in df_merged.columns for var in variables):
-        fig_scatter = px.scatter_matrix(df_merged, dimensions=variables)
+    df_merged = df_merged_vars.merge(locations_df, on="idema", how="left")
+
+    if all(var in df_merged.columns for var in element_vars):
+        fig_scatter = px.scatter_matrix(df_merged, dimensions=element_vars)
         fig_scatter.update_traces(marker=dict(color="purple", size=6, opacity=0.7))
         fig_scatter.update_layout(
             title="Scatter Matrix de Variables Meteorológicas",
@@ -117,50 +86,22 @@ def graficar_scatter_matrix():
 
 def mapa_coropletico():
     st.header("Mapa Coroplético de la temperatura media por provincia")
-    
 
-    fecha_temp = str(select_date())
-    
-    db = DBHandler()
-    temp_data = db.get_estaciones_historico_rango("temperatura", fecha_temp, fecha_temp)
-    
-    provincias = db.get_table("provincias")
-    estaciones = db.get_table("estaciones")
-    
-    df_provincias = pd.DataFrame(provincias)
-    df_estaciones = pd.DataFrame(estaciones)
-    df_temp = pd.DataFrame(temp_data)
-    
-    df_temp_merged = df_temp.merge(df_estaciones, on="idema", how="left").merge(
-        df_provincias, left_on="provincia_id", right_on="id", how="left", suffixes=("_est", "_prov")
-    ).sort_values("fecha")
-    
-    df_temp_prov = df_temp_merged.groupby("provincia_id", as_index=False).agg({
-        "nombre_prov": "last",
-        "tmed": "mean"
-    })
-    df_temp_prov["nombre_prov"] = df_temp_prov["nombre_prov"].apply(
-        lambda x: unidecode.unidecode(x.strip().lower())
-    )
-    
-    geojson_dir = "../../data/geojson/provincias"
-    geojson_unificado = unificar_geojson_provincias(geojson_dir)
-    geojson_merged = merge_geojson_provincias(geojson_unificado)
-    
-    df_temp_prov["provincia_id"] = df_temp_prov["provincia_id"].astype(str)
-    
-    mapa = crear_mapa_choropleth(
-        geojson_data=geojson_merged,
-        df=df_temp_prov,
-        id_col="provincia_id",
-        value_col="tmed",
-        tooltip_field=["nombre_prov", "tmed"],
-        tooltip_alias=["Provincia:", "Temperatura media (°C):"],
-        legend_name="Temperatura Media (°C)"
-    )
-    
-    st_folium(mapa, width=700, height=500)
+    st.write("Selecciona el elemento:")
+    elemento = element_filter()
 
+    if elemento:
+        data = db.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
+        df = pd.DataFrame(data)
+        avg_df = provincia_avg(df, elemento)
 
-if "st_page" in globals():
-    show_graficos()
+        cols = element_cols_map[elemento]
+        mapa = spain_map()
+
+        for col in cols:
+            add_to_map(mapa, avg_df, col, label_maps[col], color_maps[col])
+
+        folium.LayerControl().add_to(mapa)
+        folium_static(mapa)
+
+show_graficos()

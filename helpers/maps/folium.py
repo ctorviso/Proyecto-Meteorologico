@@ -1,19 +1,12 @@
 import folium
-import geopandas as gpd
 
 
 def spain_map():
     m = folium.Map(
-        location=[40.4168, -3.7038],
-        zoom_start=6
+        location=[36, -7],
+        zoom_start=5
     )
     return m
-
-def set_map_bounds(m, geojson):
-    gdf = gpd.GeoDataFrame.from_features(geojson["features"])
-    bounds = gdf.total_bounds
-    m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
-
 
 def get_column_choropleth(geojson, df, target_col: str, label: str, color: str):
     return folium.Choropleth(

@@ -1,11 +1,10 @@
 from functools import reduce
-import folium
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_folium import folium_static
 from helpers.lookups import locations_df, element_cols_map, label_maps, color_maps
-from helpers.maps.folium import spain_map, create_tooltip, get_column_choropleth, set_map_bounds
+from helpers.maps.folium import spain_map, create_tooltip, get_column_choropleth
 from helpers.maps.geojson import inject_col_values
 from helpers.preprocessing import provincia_avg
 from helpers.visualization import histograma
@@ -102,7 +101,6 @@ def mapa_coropletico():
 
         for col in element_cols_map[elemento]:
             maps[col] = spain_map()
-            set_map_bounds(maps[col], geojson)
             choro = get_column_choropleth(geojson, avg_df, col, label_maps[col], color_maps[col]).add_to(maps[col])
             create_tooltip(col, label_maps[col]).add_to(choro.geojson)
 

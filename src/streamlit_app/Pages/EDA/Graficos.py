@@ -98,14 +98,15 @@ def mapa_coropletico():
 
         geojson = inject_col_values(avg_df, element_cols_map[elemento])
 
-        mapa = spain_map()
-        set_map_bounds(mapa, geojson)
+        maps = {}
 
         for col in element_cols_map[elemento]:
-            choro = get_column_choropleth(geojson, avg_df, col, label_maps[col], color_maps[col]).add_to(mapa)
+            maps[col] = spain_map()
+            set_map_bounds(maps[col], geojson)
+            choro = get_column_choropleth(geojson, avg_df, col, label_maps[col], color_maps[col]).add_to(maps[col])
             create_tooltip(col, label_maps[col]).add_to(choro.geojson)
 
-        folium.LayerControl().add_to(mapa)
-        folium_static(mapa)
+        selected_map = st.radio("Selecciona el variable:", list(maps.keys()))
+        folium_static(maps[selected_map])
 
 show_graficos()

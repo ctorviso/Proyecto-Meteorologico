@@ -11,17 +11,17 @@ import asyncio
 
 logger = setup_logger("etl_pipeline")
 
-all_cols = ['uuid', 'idema', 'fecha', 'extracted']
-lluvia_cols = all_cols + ['prec']
-humedad_cols = all_cols + ['hr_media', 'hr_max', 'hora_hr_max', 'hr_min', 'hora_hr_min']
-temperatura_cols = all_cols + ['tmed', 'tmin', 'horatmin', 'tmax', 'horatmax',]
-viento_cols = all_cols + ['velmedia', 'racha', 'horaracha', 'dir']
+meta_cols = ['uuid', 'idema', 'fecha', 'extracted']
+lluvia_cols = ['prec']
+humedad_cols = ['hr_media', 'hr_max', 'hora_hr_max', 'hr_min', 'hora_hr_min']
+temperatura_cols = ['tmed', 'tmin', 'horatmin', 'tmax', 'horatmax',]
+viento_cols = ['velmedia', 'racha', 'horaracha', 'dir']
 
 def filter_date_range(start_date, end_date):
     db = DBHandler()
 
-    db_earliest_date = db.get_earliest_historical_date('lluvia_historico')
-    db_latest_date = db.get_latest_historical_date('lluvia_historico')
+    db_earliest_date = db.get_earliest_historical_date()
+    db_latest_date = db.get_latest_historical_date()
 
     if end_date < db_earliest_date or start_date > db_latest_date:
         logger.info("Requested date range is outside existing data. Processing full range.")
@@ -71,6 +71,9 @@ async def run_etl(start_date: date, end_date: date):
 
     start_time = time.time()
 
+    logger.info("Uploading metadata...")
+    insert_batches('historico_meta', df[meta_cols], start_date, end_date)
+
     logger.info("Uploading temperatura...")
     insert_batches('temperatura_historico', df[temperatura_cols], start_date, end_date)
 
@@ -91,7 +94,7 @@ async def run_etl_latest():
     logger.info("Running ETL Latest...")
 
     db = DBHandler()
-    current_latest = db.get_latest_historical_date('lluvia_historico')
+    current_latest = db.get_latest_historical_date()
     logger.info(f"Current latest: {current_latest}")
     start_date = current_latest + timedelta(days=1)
     end_date = datetime.now().date()

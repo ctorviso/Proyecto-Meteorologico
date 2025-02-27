@@ -1,4 +1,8 @@
-from fastapi import APIRouter
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Optional
+from fastapi import APIRouter, Query
+
 from src.db.db_handler import DBHandler
 
 db = DBHandler()
@@ -25,43 +29,49 @@ for table in table_names:
     router.add_api_route(f"/{table}", make_table_route(table), methods=["GET"])
     router.add_api_route(f"/{table}/columns", make_columns_route(table), methods=["GET"])
 
-elements = ["lluvia", "temperatura", "viento", "humedad"]
+elements = ['temperatura', 'lluvia', 'viento', 'humedad']
 
-estacion_route = f"/historico/estacion/{{idema}}/{{elemento}}"
-estaciones_route = f"/historico/estaciones/{{elemento}}"
-estacion_rango_route = f"/historico/estacion/{{idema}}/{{elemento}}/rango/{{fecha_ini}}/{{fecha_fin}}"
-estaciones_rango_route = f"/historico/estaciones/{{elemento}}/rango/{{fecha_ini}}/{{fecha_fin}}"
+class Elemento(str, Enum):
+    temperatura = "temperatura"
+    lluvia = "lluvia"
+    viento = "viento"
+    humedad = "humedad"
 
+elementos_query = Query(None,
+    title="Elementos",
+    description=f"""Elementos a mostrar separados por coma.\nValores posibles: {', '.join(elements)}""",
+    alias="elementos"
+)
 
-def make_estacion_rango_route():
-    def route_handler(idema: str, fecha_ini: str, fecha_fin: str, elemento: str):
-        return db.get_estacion_historico_rango(elemento, idema, fecha_ini, fecha_fin)
+idemas_query = Query(None,
+    title="IDEMA",
+    description="IDEMAs de las estaciones a mostrar separados por coma. Ejemplos: 3129, 1387",
+    alias="idema"
+)
 
-    return route_handler
+today = datetime.now().strftime('%Y-%m-%d')
+last_week = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
 
+fecha_ini_query = Query(None,
+    title="Fecha inicio",
+    description=f"Fecha de inicio en formato YYYY-MM-DD. eg. {last_week}",
+    alias="fecha_ini"
+)
 
-def make_estaciones_rango_route():
-    def route_handler(fecha_ini: str, fecha_fin: str, elemento: str):
-        return db.get_estaciones_historico_rango(elemento, fecha_ini, fecha_fin)
+fecha_fin_query = Query(None,
+    title="Fecha fin",
+    description=f"Fecha de fin en formato YYYY-MM-DD. eg. {today}",
+    alias="fecha_fin"
+)
 
-    return route_handler
-
-
-def make_estacion_route():
-    def route_handler(idema: str, elemento: str):
-        return db.get_estacion_historico(elemento, idema)
-
-    return route_handler
-
-
-def make_estaciones_route():
-    def route_handler(elemento: str):
-        return db.get_estaciones_historico(elemento)
-
-    return route_handler
-
-
-router.add_api_route(estacion_route, make_estacion_route(), methods=["GET"])
-router.add_api_route(estaciones_route, make_estaciones_route(), methods=["GET"])
-router.add_api_route(estacion_rango_route, make_estacion_rango_route(), methods=["GET"])
-router.add_api_route(estaciones_rango_route, make_estaciones_rango_route(), methods=["GET"])
+@router.get("/historico")
+def get_historico(
+        elementos: Optional[str] = elementos_query,
+        idemas: Optional[str] = idemas_query,
+        fecha_ini: Optional[str] = fecha_ini_query,
+        fecha_fin: Optional[str] = fecha_fin_query
+):
+    elementos = elementos.split(",") if elementos else None
+    if elementos:
+        elementos = [elemento.lower().strip() for elemento in elementos]
+    return db.get_historico(elementos, idemas, fecha_ini, fecha_fin)

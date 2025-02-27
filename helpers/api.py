@@ -1,42 +1,41 @@
 from helpers.config import api_url
 from helpers.http_request import get
 
-api_endpoints = {
-    "table": "/db/{table}",
-    "estacion": "/db/historico/estacion/{idema}/{elemento}",
-    "estaciones": "/db/historico/estaciones/{elemento}",
-    "estacion_rango": "/db/historico/estacion/{idema}/{elemento}/rango/{fecha_ini}/{fecha_fin}",
-    "estaciones_rango": "/db/historico/estaciones/{elemento}/rango/{fecha_ini}/{fecha_fin}"
-}
-
+table_url = api_url + "/db/{table}"
+historico_url = api_url + "/db/historico"
 
 def get_table(table: str):
-    url = api_url + api_endpoints['table'].format(table=table)
-    return get(url=url)[0]
+    return get(table_url['table'].format(table=table))[0]
 
 
 def get_estacion_historico(idema: str, elemento: str):
-    url = api_url + api_endpoints['estacion'].format(idema=idema, elemento=elemento)
-    return get(url=url)[0]
+    params = {
+        'idemas': idema,
+        'elementos': elemento
+    }
+    return get(url=historico_url, params=params)[0]
 
 
 def get_estaciones_historico(elemento: str):
-    url = api_url + api_endpoints['estaciones'].format(elemento=elemento)
-    return get(url=url)[0]
+    params = {
+        'elementos': elemento
+    }
+    return get(url=historico_url, params=params)[0]
 
 
 def get_estacion_historico_rango(idema: str, elemento: str, fecha_ini: str, fecha_fin: str):
-    url = api_url + api_endpoints['estacion_rango'].format(
-        idema=idema,
-        elemento=elemento,
-        fecha_ini=fecha_ini,
-        fecha_fin=fecha_fin)
-    return get(url=url)[0]
-
+    params = {
+        'idemas': idema,
+        'elementos': elemento,
+        'fecha_ini': fecha_ini,
+        'fecha_fin': fecha_fin
+    }
+    return get(url=historico_url, params=params)[0]
 
 def get_estaciones_historico_rango(elemento: str, fecha_ini: str, fecha_fin: str):
-    url = api_url + api_endpoints['estaciones_rango'].format(
-        elemento=elemento,
-        fecha_ini=fecha_ini,
-        fecha_fin=fecha_fin)
-    return get(url=url)[0]
+    params = {
+        'elementos': elemento,
+        'fecha_ini': fecha_ini,
+        'fecha_fin': fecha_fin
+    }
+    return get(url=historico_url, params=params)[0]

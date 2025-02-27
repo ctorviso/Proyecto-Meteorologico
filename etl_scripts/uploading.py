@@ -20,7 +20,7 @@ def insert_batches(table, df, start_date, end_date):
 
         batch = df[df["fecha"] == date_str]
 
-        if db.historical_exists(table, date_str):
+        if db.historical_exists(date_str):
             logger.warning(f"Records for date {date_str} already exist. Skipping...")
             continue
 

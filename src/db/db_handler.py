@@ -1,8 +1,8 @@
 import datetime
-from typing import Optional
+from typing import Optional, List, Union
 import psycopg2
 import psycopg2.extensions
-from sqlalchemy import create_engine, text, Table, MetaData
+from sqlalchemy import create_engine, text, Table, MetaData, inspect
 from helpers.config import get_env_var
 
 
@@ -11,7 +11,12 @@ def adapt_time(time_obj):
 
 psycopg2.extensions.register_adapter(datetime.time, adapt_time)
 
+
+# noinspection PyMethodMayBeStatic
 class DBHandler:
+
+    elementos = ['lluvia', 'temperatura', 'viento', 'humedad']
+
     _instance = None
 
     def __new__(cls):
@@ -65,11 +70,15 @@ class DBHandler:
             connection.execute(table.insert(), records)
 
     # In case of insertion mistakes, thanks to the extraction column we can easily revert back
-    def delete_extracted_after_date(self, table_name: str, date_threshold):
-        query = text(f"DELETE FROM {table_name} WHERE extracted >= :date_threshold")
-        with self.engine.connect() as connection:
-            connection.execute(query, {"date_threshold": date_threshold})
-            connection.commit()
+    def delete_extracted_after_date(self, date_threshold):
+        query = f"GET uuid FROM historico_meta WHERE extracted >= :date_threshold"
+        uuids = self.fetch(query, {"date_threshold": date_threshold})
+        # Delete from all tables
+        for elemento in self.elementos:
+            query = f"DELETE FROM {elemento}_historico WHERE uuid IN :uuids"
+            self.fetch(query, {"uuids": tuple(uuids)})
+        query = f"DELETE FROM historico_meta WHERE extracted >= :date_threshold"
+        self.fetch(query, {"date_threshold": date_threshold})
 
     def get_table(self, table_name: str):
         """Consulta de datos de una tabla en la base de datos"""
@@ -94,69 +103,113 @@ class DBHandler:
                 return [{'column': col} for col in result.keys()]
             return [dict(zip(result.keys(), row)) for row in result]
 
-    def get_estacion_historico(self, elemento: str, idema: str):
-        table_name = f"{elemento}_historico"
-        query = text(f"SELECT * FROM {table_name} WHERE idema = :idema")
-
+    def fetch(self, query: str, params: dict):
         with self.engine.connect() as connection:
-            result = connection.execute(query, {"idema": idema})
-            if result.rowcount == 0:
-                return [{'column': col} for col in result.keys()]
+            result = connection.execute(text(query), params)
             return [dict(zip(result.keys(), row)) for row in result]
 
-    def get_estaciones_historico(self, elemento: str):
-        table_name = f"{elemento}_historico"
-        query = text(f"SELECT * FROM {table_name}")
+    def _get_columns_without_uuid(self, table_name):
+        inspector = inspect(self.engine)
+        columns = [column["name"] for column in inspector.get_columns(table_name)]
+        columns.remove("uuid")
+        return columns
 
-        with self.engine.connect() as connection:
-            result = connection.execute(query)
-            if result.rowcount == 0:
-                return [{'column': col} for col in result.keys()]
-            return [dict(zip(result.keys(), row)) for row in result]
+    def parse_string_or_list(self, input_param: Optional[Union[List[str], str]]) -> Optional[List[str]]:
+        if input_param is None:
+            return None
 
-    def get_estacion_historico_rango(self, elemento: str, idema: str, fechaIni: str, fechaFin: str,
-                                     column_names: Optional[list] = None):
-        columns = ', '.join(column_names) if column_names else '*'
-        table_name = f"{elemento}_historico"
-        query = text(
-            f"SELECT {columns} FROM {table_name} WHERE idema = :idema AND fecha BETWEEN :fechaIni AND :fechaFin")
+        if isinstance(input_param, str):
+            return [item.strip() for item in input_param.split(',')]
+        elif isinstance(input_param, list):
+            return [str(item).strip() for item in input_param]
+        else:
+            raise TypeError("Parameter must be a list or comma-separated string")
 
-        with self.engine.connect() as connection:
-            result = connection.execute(query, {"idema": idema, "fechaIni": fechaIni, "fechaFin": fechaFin})
-            if result.rowcount == 0:
-                return [{'column': col} for col in result.keys()]
-            return [dict(zip(result.keys(), row)) for row in result]
+    def _format_query_historico(
+            self,
+            idemas: Optional[List[str]] = None,
+            fecha_ini: Optional[str] = None,
+            fecha_fin: Optional[str] = None
+    ):
+        query = "SELECT uuid, fecha, idema FROM historico_meta"
+        conditions = []
 
-    def get_estaciones_historico_rango(self, elemento: str, fechaIni: str, fechaFin: str,
-                                       column_names: Optional[list] = None):
-        columns = ', '.join(column_names) if column_names else '*'
-        table_name = f"{elemento}_historico"
-        query = text(f"SELECT {columns} FROM {table_name} WHERE fecha BETWEEN :fechaIni AND :fechaFin")
+        if idemas:
+            conditions.append("idema IN :idemas")
+        if fecha_ini:
+            conditions.append("fecha >= :fecha_ini")
+        if fecha_fin:
+            conditions.append("fecha <= :fecha_fin")
 
-        with self.engine.connect() as connection:
-            result = connection.execute(query, {"fechaIni": fechaIni, "fechaFin": fechaFin})
-            if result.rowcount == 0:
-                return [{'column': col} for col in result.keys()]
-            return [dict(zip(result.keys(), row)) for row in result]
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
 
-    def get_earliest_historical_date(self, table_name: str):
-        query = text(f"SELECT MIN(fecha) FROM {table_name}")
+        params = {}
+        if idemas:
+            params["idemas"] = tuple(idemas)
+        if fecha_ini:
+            params["fecha_ini"] = fecha_ini
+        if fecha_fin:
+            params["fecha_fin"] = fecha_fin
+
+        return query, params
+
+    # noinspection PyMethodMayBeStatic
+    def _format_elementos(self, elementos: Optional[List[str]] = None):
+        tablas = ['lluvia', 'temperatura', 'viento', 'humedad']
+        if not elementos:
+            elementos = tablas
+        return elementos
+
+    def get_historico(
+            self,
+            elementos: Optional[List[str]] = None,
+            idemas: Optional[Union[List[str], str]] = None,
+            fecha_ini: Optional[str] = None,
+            fecha_fin: Optional[str] = None
+    ):
+        elementos = self._format_elementos(elementos)
+        idemas = self.parse_string_or_list(idemas)
+        base_query, params = self._format_query_historico(idemas, fecha_ini, fecha_fin)
+        query = "SELECT hm.uuid, hm.fecha, hm.idema"
+
+        for elemento in elementos:
+            table_alias = f"{elemento[0]}"
+            query += f", {table_alias}.*"
+
+        query += f"""
+                FROM ({base_query}) AS hm
+            """
+
+        # Add JOIN for each elemento table
+        for elemento in elementos:
+            table_alias = f"{elemento[0]}"  # Use first letter as alias
+            query += f"""
+                    LEFT JOIN {elemento}_historico AS {table_alias} 
+                    ON hm.uuid = {table_alias}.uuid
+                """
+
+        result = self.fetch(query, params)
+        return result
+
+    def get_earliest_historical_date(self):
+        query = text(f"SELECT MIN(fecha) FROM historico_meta")
         with self.engine.connect() as connection:
             result = connection.execute(query)
             if result.rowcount == 0:
                 return [{'column': col} for col in result.keys()]
             return result.fetchone()[0]
 
-    def get_latest_historical_date(self, table_name: str):
-        query = text(f"SELECT MAX(fecha) FROM {table_name}")
+    def get_latest_historical_date(self):
+        query = text(f"SELECT MAX(fecha) FROM historico_meta")
         with self.engine.connect() as connection:
             result = connection.execute(query)
             if result.rowcount == 0:
                 return [{'column': col} for col in result.keys()]
             return result.fetchone()[0]
 
-    def historical_exists(self, table: str, fecha: str):
-        query = text(f"SELECT * FROM {table} WHERE fecha = :fecha LIMIT 1")
+    def historical_exists(self, fecha: str):
+        query = text(f"SELECT * FROM historico_meta WHERE fecha = :fecha LIMIT 1")
         with self.engine.connect() as connection:
             result = connection.execute(query, {"fecha": fecha})
             return result.fetchone() is not None

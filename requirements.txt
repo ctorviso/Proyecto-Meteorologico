@@ -10,7 +10,6 @@ pytest-cov
 # FastAPI
 fastapi
 uvicorn
-starlette
 pydantic
 
 # Streamlit
@@ -24,18 +23,12 @@ aiohttp
 # Database
 sqlalchemy
 psycopg2-binary
-asyncpg
 
 # Data manipulation
 numpy
 pandas
-unidecode
-geopandas
 
 # Data Visualization
 folium
 matplotlib
-seaborn
 plotly
-nbformat
-cartopy

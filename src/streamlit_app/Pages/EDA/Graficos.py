@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_folium import folium_static
+from src.api.routes.db_routes import elements
 from helpers.lookups import locations_df, element_cols_map, label_maps, color_maps
 from helpers.maps.folium import spain_map, create_tooltip, get_column_choropleth
 from helpers.maps.geojson import inject_col_values
@@ -58,9 +59,9 @@ def graficar_scatter_matrix():
     dfs = []
     element_col = [v[0] for v in element_cols_map.values()]
 
-    for element, col in element_cols_map.items():
+    data = api.get_estaciones_historico_rango(elemento=','.join(elements), fecha_ini=fecha_inicial, fecha_fin=fecha_final)
 
-        data = api.get_estaciones_historico_rango(element, fecha_inicial, fecha_final)
+    for element, col in element_cols_map.items():
         df_var = pd.DataFrame(data)[['idema', 'fecha', col[0]]]
         dfs.append(df_var)
     

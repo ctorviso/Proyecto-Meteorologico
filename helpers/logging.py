@@ -14,6 +14,16 @@ def get_class_name() -> str:
     return 'root'
 
 
+class ColorFormatter(logging.Formatter):
+    def format(self, record):
+        log_message = super().format(record)
+
+        # Apply yellow color for INFO level messages
+        if record.levelname == "INFO":
+            log_message = f'\033[33m{log_message}\033[0m'  # Yellow color for the entire message
+
+        return log_message
+
 def setup_logger(log_file: str, class_name: Optional[str] = None) -> logging.Logger:
     log_dir = 'logs'
     if not os.path.exists(log_dir):
@@ -25,12 +35,19 @@ def setup_logger(log_file: str, class_name: Optional[str] = None) -> logging.Log
     logger = logging.getLogger(class_name)
     logger.setLevel(logging.DEBUG)
 
-    # Create a rotating file handler
-    handler = RotatingFileHandler(f'logs/{log_file}.log', maxBytes=10000000, backupCount=3)
-    handler.setLevel(logging.DEBUG)
+    if not logger.handlers:
+        # Create a rotating file handler
+        file_handler = RotatingFileHandler(f'logs/{log_file}.log', maxBytes=10000000, backupCount=3)
+        file_handler.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s')
+        file_handler.setFormatter(formatter)
+
+        logger.addHandler(file_handler)
+
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.INFO)
+        stream_handler.setFormatter(ColorFormatter('%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s'))
+        logger.addHandler(stream_handler)
 
     return logger

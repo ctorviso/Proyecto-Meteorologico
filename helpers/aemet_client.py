@@ -1,6 +1,7 @@
 import json
 import aiohttp
 from helpers.http_request import get_async
+from helpers.logging import setup_logger
 
 
 def _format_fecha(fecha: str):
@@ -26,52 +27,65 @@ class AEMETClient:
         }
     }
 
-    def __init__(self, api_key: str):
+    _instance = None
+
+    def __new__(cls, api_key: str):
+        if cls._instance is None:
+            cls._instance = super(AEMETClient, cls).__new__(cls)
+            cls._instance._initialize(api_key)
+        return cls._instance
+
+    def _initialize(self, api_key: str):
         self._api_key = api_key
         self._headers = {'api_key': api_key}
+        self.logger = setup_logger("aemet_client")
 
-    async def _make_request(self, endpoint: str, **kwargs):
+    async def _make_request(self, session: aiohttp.ClientSession, endpoint: str, **kwargs):
         url = self.BASE_URL + endpoint.format(**kwargs)
+        self.logger.info(f"Making request to {url}")
 
-        async with aiohttp.ClientSession() as session:
-            response = await get_async(url=url, session=session, headers=self._headers)
+        response = await get_async(url=url, session=session, headers=self._headers)
+        if response[0]['estado'] == 404:
+            raise ValueError(f"Resource not found: {response[0]['descripcion']}")
 
-            datos = await get_async(url=response[0]['datos'], session=session, headers=self._headers)
-            metadatos = await get_async(url=response[0]['metadatos'], session=session, headers=self._headers)
+        self.logger.info(f"Response: {response}")
 
-            return {
-                'datos': datos,
-                'metadatos': metadatos
-            }
+        datos = await get_async(url=response[0]['datos'], session=session, headers=self._headers)
+        metadatos = await get_async(url=response[0]['metadatos'], session=session, headers=self._headers)
 
-    async def get_predicciones_municipio(self, municipio: str):
+        return {
+            'datos': datos,
+            'metadatos': metadatos
+        }
+
+    async def get_predicciones_municipio(self, session, municipio: str):
         endpoint = self.ENDPOINTS['predicciones-especificas']['municipio-horaria']
-        response = await self._make_request(endpoint.format(municipio=municipio))
+        response = await self._make_request(session, endpoint.format(municipio=municipio))
 
         return json.loads(response['datos'][0])[0]['prediccion']['dia']
 
-    async def get_estacion_data(self, idema: str):
+    async def get_estacion_data(self, session, idema: str):
         endpoint = self.ENDPOINTS['observacion-convencional']['tiempo-actual']
-        response = await self._make_request(endpoint.format(idema=idema))
+        response = await self._make_request(session, endpoint.format(idema=idema))
 
         return json.loads(response['datos'][0])
 
-    async def get_municipio(self, municipio_id: str):
+    async def get_municipio(self, session, municipio_id: str):
         endpoint = self.ENDPOINTS['maestro']['municipio']
-        response = await self._make_request(endpoint, municipio_id=municipio_id)
+        response = await self._make_request(session, endpoint, municipio_id=municipio_id)
 
         return json.loads(response['datos'][0])
 
-    async def get_valores_climatologicos_diarios_estacion(self, fechaIniStr: str, fechaFinStr: str, idema: str):
+    async def get_historico_estacion(self, session, fechaIniStr: str, fechaFinStr: str, idema: str):
         endpoint = self.ENDPOINTS['valores-climatologicos']['estacion-diaria']
-        response = await self._make_request(endpoint, fechaIniStr=_format_fecha(fechaIniStr),
+        response = await self._make_request(session, endpoint, fechaIniStr=_format_fecha(fechaIniStr),
                                             fechaFinStr=_format_fecha(fechaFinStr), idema=idema)
 
         return json.loads(response['datos'][0])
 
-    async def get_valores_climatologicos_diarios_todas_estaciones(self, fechaIniStr: str, fechaFinStr: str):
+    async def get_historico_todas_estaciones(self, session, fechaIniStr: str, fechaFinStr: str):
         endpoint = self.ENDPOINTS['valores-climatologicos']['estaciones-diaria']
-        response = await self._make_request(endpoint, fechaIniStr=_format_fecha(fechaIniStr),
+        response = await self._make_request(session, endpoint, fechaIniStr=_format_fecha(fechaIniStr),
                                             fechaFinStr=_format_fecha(fechaFinStr))
 
         return json.loads(response['datos'][0])

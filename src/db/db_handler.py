@@ -154,3 +154,9 @@ class DBHandler:
             if result.rowcount == 0:
                 return [{'column': col} for col in result.keys()]
             return result.fetchone()[0]
+
+    def historical_exists(self, table: str, fecha: str):
+        query = text(f"SELECT * FROM {table} WHERE fecha = :fecha LIMIT 1")
+        with self.engine.connect() as connection:
+            result = connection.execute(query, {"fecha": fecha})
+            return result.fetchone() is not None

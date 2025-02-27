@@ -1,7 +1,7 @@
-import asyncio
 from time import sleep
 import aiohttp
 import requests
+
 from helpers.logging import setup_logger
 
 logger = setup_logger('http_requests')
@@ -34,28 +34,13 @@ def get(url: str, max_retries=3, **kwargs):
     return None, latest_error
 
 
-async def get_async(session: aiohttp.ClientSession, url: str, max_retries=3, **kwargs):
-    latest_error = None
-    for attempt in range(max_retries):
-        try:
-            async with session.get(url, **kwargs) as response:
-                if response.status in retryable_errors:
-                    raise RetryableError(response.status)
+async def get_async(session: aiohttp.ClientSession, url: str, **kwargs):
+    async with session.get(url, **kwargs) as response:
+        response.raise_for_status()
+        content_type = response.headers.get("Content-Type", "").lower()
+        if content_type.startswith("application/json"):
+            data = await response.json()
+        else:
+            data = await response.text()
 
-                response.raise_for_status()
-                content_type = response.headers.get("Content-Type", "").lower()
-                if content_type.startswith("application/json"):
-                    data = await response.json()
-                else:
-                    data = await response.text()
-
-                return data, response.status
-
-        except RetryableError as e:
-            latest_error = e
-            if attempt == max_retries - 1:
-                raise
-            await asyncio.sleep(2 ** attempt)  # exponential backoff
-
-    if latest_error:
-        raise latest_error
+        return data, response.status

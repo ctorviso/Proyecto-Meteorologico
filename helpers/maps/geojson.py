@@ -21,7 +21,7 @@ def read_provincias() -> dict:
 def update_properties(data: dict) -> dict:
     locations_file = os.path.join(script_dir, '../data/locations/provincias.json')
 
-    with open(locations_file) as f:
+    with open(locations_file, encoding='utf-8') as f:
         loc_data = json.load(f)
 
     for key, value in loc_data.items():

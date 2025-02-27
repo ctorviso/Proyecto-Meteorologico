@@ -1,17 +1,18 @@
 import json
-
 import pandas as pd
+import os
+from helpers.config import script_dir
 
-with open('data/locations/comunidades.json', encoding='utf-8') as f:
+with open(os.path.join(script_dir, '../data/locations/comunidades.json'), encoding='utf-8') as f:
     comunidades = json.load(f)
 
-with open('data/locations/provincias.json', encoding='utf-8') as f:
+with open(os.path.join(script_dir, '../data/locations/provincias.json'), encoding='utf-8') as f:
     provincias = json.load(f)
 
-with open('data/locations/municipios.json', encoding='utf-8') as f:
+with open(os.path.join(script_dir, '../data/locations/municipios.json'), encoding='utf-8') as f:
     municipios = json.load(f)
 
-with open('data/locations/estaciones.json', encoding='utf-8') as f:
+with open(os.path.join(script_dir, '../data/locations/estaciones.json'), encoding='utf-8') as f:
     estaciones = json.load(f)
 
 com_ids = comunidades.keys()

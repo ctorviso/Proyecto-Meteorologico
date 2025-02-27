@@ -10,7 +10,7 @@ def get_table(table: str):
 
 def get_estacion_historico(idema: str, elemento: str):
     params = {
-        'idemas': idema,
+        'idema': idema,
         'elementos': elemento
     }
     return get(url=historico_url, params=params)[0]
@@ -25,7 +25,7 @@ def get_estaciones_historico(elemento: str):
 
 def get_estacion_historico_rango(idema: str, elemento: str, fecha_ini: str, fecha_fin: str):
     params = {
-        'idemas': idema,
+        'idema': idema,
         'elementos': elemento,
         'fecha_ini': fecha_ini,
         'fecha_fin': fecha_fin

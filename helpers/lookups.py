@@ -46,11 +46,41 @@ comunidades_df['com_auto_id'] = comunidades_df['com_auto_id'].astype(str)
 locations_df = estaciones_df.merge(provincias_df, on='provincia_id', how='left')
 locations_df = locations_df.merge(comunidades_df, on='com_auto_id', how='left')
 
-element_cols_map = {
+elements = ['temperatura', 'lluvia', 'viento', 'humedad', 'presion', 'sol']
+element_cols = ['tmed', 'tmin', 'tmax', 'hora_tmax', 'hora_tmin',
+                'prec', 'sol',
+                'velmedia', 'racha', 'hora_racha', 'dir',
+                'hr_media', 'hr_min', 'hr_max', 'hora_hr_max', 'hora_hr_min',
+                'pres_max', 'pres_min', 'hora_pres_max', 'hora_pres_min']
+
+int_cols = ['hr_media', 'hr_min', 'hr_max']
+float_cols = ['tmed', 'tmin', 'tmax', 'prec', 'velmedia', 'racha', 'pres_max', 'pres_min', 'sol']
+numeric_cols = int_cols + float_cols
+time_cols = ['hora_tmin', 'hora_tmax', 'hora_racha', 'hora_hr_max', 'hora_hr_min', 'hora_pres_max', 'hora_pres_min']
+
+element_cols_map_numeric = {
     'temperatura': ['tmed', 'tmax', 'tmin'],
     'lluvia': ['prec'],
     'viento': ['velmedia'],
-    'humedad': ['hr_media', 'hr_min', 'hr_max']
+    'humedad': ['hr_media', 'hr_min', 'hr_max'],
+    'presion': ['pres_max', 'pres_min'],
+    'sol': ['sol']
+}
+
+element_cols_map = {
+    'temperatura': ['tmed', 'tmax', 'tmin', 'hora_tmax', 'hora_tmin'],
+    'lluvia': ['prec'],
+    'viento': ['velmedia', 'racha', 'hora_racha', 'dir'],
+    'humedad': ['hr_media', 'hr_min', 'hr_max', 'hora_hr_max', 'hora_hr_min'],
+    'presion': ['pres_max', 'pres_min', 'hora_pres_max', 'hora_pres_min'],
+    'sol': ['sol']
+}
+
+element_cols_map_time = {
+    'temperatura': ['hora_tmax', 'hora_tmin'],
+    'viento': ['hora_racha'],
+    'humedad': ['hora_hr_max', 'hora_hr_min'],
+    'presion': ['hora_pres_max', 'hora_pres_min']
 }
 
 label_maps = {
@@ -62,17 +92,30 @@ label_maps = {
     'racha': "Racha Viento",
     'hr_media': "Humedad Relativa",
     'hr_min': "Humedad Mínima",
-    'hr_max': "Humedad Máxima"
+    'hr_max': "Humedad Máxima",
+    'pres_max': "Presión Máxima",
+    'pres_min': "Presión Mínima",
+    'sol': "Horas de Sol",
+    'hora_tmax': "Hora Temperatura Máxima",
+    'hora_tmin': "Hora Temperatura Mínima",
+    'hora_racha': "Hora Racha Viento",
+    'hora_hr_max': "Hora Humedad Máxima",
+    'hora_hr_min': "Hora Humedad Mínima",
+    'hora_pres_max': "Hora Presión Máxima",
+    'hora_pres_min': "Hora Presión Mínima"
 }
 
 color_maps = {
     'tmed': "RdYlBu_r",
-    'tmin': "Blues",
-    'tmax': "YlOrRd",
+    'tmin': "RdYlBu_r",
+    'tmax': "RdYlBu_r",
     'prec': "Blues",
-    'velmedia': "Greens",
+    'velmedia': "BuGn",
     'racha': "BuGn",
-    'hr_media': "YlGn",
+    'hr_media': "Greens",
     'hr_min': "Greens",
-    'hr_max': "Reds"
+    'hr_max': "Greens",
+    'pres_max': "Purples",
+    'pres_min': "Purples",
+    'sol': "YlOrBr"
 }

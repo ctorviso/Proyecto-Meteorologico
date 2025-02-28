@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
-from enum import Enum
 from typing import Optional
 from fastapi import APIRouter, Query
 
+from helpers.lookups import element_cols_map, elements
 from src.db.db_handler import DBHandler
 
 db = DBHandler()
@@ -28,14 +28,6 @@ for table in table_names:
 
     router.add_api_route(f"/{table}", make_table_route(table), methods=["GET"])
     router.add_api_route(f"/{table}/columns", make_columns_route(table), methods=["GET"])
-
-elements = ['temperatura', 'lluvia', 'viento', 'humedad']
-
-class Elemento(str, Enum):
-    temperatura = "temperatura"
-    lluvia = "lluvia"
-    viento = "viento"
-    humedad = "humedad"
 
 elementos_query = Query(None,
     title="Elementos",
@@ -71,7 +63,11 @@ def get_historico(
         fecha_ini: Optional[str] = fecha_ini_query,
         fecha_fin: Optional[str] = fecha_fin_query
 ):
-    elementos = elementos.split(",") if elementos else None
-    if elementos:
-        elementos = [elemento.lower().strip() for elemento in elementos]
-    return db.get_historico(elementos, idemas, fecha_ini, fecha_fin)
+    all_cols = []
+    for element in elementos.lower().split(","):
+        all_cols.extend(element_cols_map[element.strip()])
+    idemas = idemas.replace(" ", "") if idemas else None
+    fecha_ini = fecha_ini.strip() if fecha_ini else None
+    fecha_fin = fecha_fin.strip() if fecha_fin else None
+    all_cols += ["idema", "fecha"]
+    return db.get_historico(all_cols, idemas, fecha_ini, fecha_fin)

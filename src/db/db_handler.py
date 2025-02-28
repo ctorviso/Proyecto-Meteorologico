@@ -2,7 +2,7 @@ import datetime
 from typing import Optional, List, Union
 import psycopg2
 import psycopg2.extensions
-from sqlalchemy import create_engine, text, Table, MetaData, inspect
+from sqlalchemy import create_engine, text, Table, MetaData
 from helpers.config import get_env_var
 
 
@@ -108,12 +108,6 @@ class DBHandler:
             result = connection.execute(text(query), params)
             return [dict(zip(result.keys(), row)) for row in result]
 
-    def _get_columns_without_uuid(self, table_name):
-        inspector = inspect(self.engine)
-        columns = [column["name"] for column in inspector.get_columns(table_name)]
-        columns.remove("uuid")
-        return columns
-
     def parse_string_or_list(self, input_param: Optional[Union[List[str], str]]) -> Optional[List[str]]:
         if input_param is None:
             return None
@@ -127,11 +121,13 @@ class DBHandler:
 
     def _format_query_historico(
             self,
+            columns: Optional[List[str]] = None,
             idemas: Optional[List[str]] = None,
             fecha_ini: Optional[str] = None,
             fecha_fin: Optional[str] = None
     ):
-        query = "SELECT uuid, fecha, idema FROM historico_meta"
+        columns = ", ".join(columns) if columns else "*"
+        query = f"SELECT {columns} FROM historico"
         conditions = []
 
         if idemas:
@@ -154,46 +150,21 @@ class DBHandler:
 
         return query, params
 
-    # noinspection PyMethodMayBeStatic
-    def _format_elementos(self, elementos: Optional[List[str]] = None):
-        tablas = ['lluvia', 'temperatura', 'viento', 'humedad']
-        if not elementos:
-            elementos = tablas
-        return elementos
-
     def get_historico(
             self,
-            elementos: Optional[List[str]] = None,
+            columns: Optional[Union[List[str], str]] = None,
             idemas: Optional[Union[List[str], str]] = None,
             fecha_ini: Optional[str] = None,
             fecha_fin: Optional[str] = None
     ):
-        elementos = self._format_elementos(elementos)
         idemas = self.parse_string_or_list(idemas)
-        base_query, params = self._format_query_historico(idemas, fecha_ini, fecha_fin)
-        query = "SELECT hm.uuid, hm.fecha, hm.idema"
-
-        for elemento in elementos:
-            table_alias = f"{elemento[0]}"
-            query += f", {table_alias}.*"
-
-        query += f"""
-                FROM ({base_query}) AS hm
-            """
-
-        # Add JOIN for each elemento table
-        for elemento in elementos:
-            table_alias = f"{elemento[0]}"  # Use first letter as alias
-            query += f"""
-                    LEFT JOIN {elemento}_historico AS {table_alias} 
-                    ON hm.uuid = {table_alias}.uuid
-                """
-
+        columns = self.parse_string_or_list(columns)
+        query, params = self._format_query_historico(columns, idemas, fecha_ini, fecha_fin)
         result = self.fetch(query, params)
         return result
 
     def get_earliest_historical_date(self):
-        query = text(f"SELECT MIN(fecha) FROM historico_meta")
+        query = text(f"SELECT MIN(fecha) FROM historico")
         with self.engine.connect() as connection:
             result = connection.execute(query)
             if result.rowcount == 0:
@@ -201,7 +172,7 @@ class DBHandler:
             return result.fetchone()[0]
 
     def get_latest_historical_date(self):
-        query = text(f"SELECT MAX(fecha) FROM historico_meta")
+        query = text(f"SELECT MAX(fecha) FROM historico")
         with self.engine.connect() as connection:
             result = connection.execute(query)
             if result.rowcount == 0:
@@ -209,7 +180,7 @@ class DBHandler:
             return result.fetchone()[0]
 
     def historical_exists(self, fecha: str):
-        query = text(f"SELECT * FROM historico_meta WHERE fecha = :fecha LIMIT 1")
+        query = text(f"SELECT * FROM historico WHERE fecha = :fecha LIMIT 1")
         with self.engine.connect() as connection:
             result = connection.execute(query, {"fecha": fecha})
             return result.fetchone() is not None

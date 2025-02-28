@@ -1,44 +1,47 @@
 import numpy as np
 import pandas as pd
-
-from helpers import preprocessing
+from helpers.lookups import float_cols, int_cols, time_cols, numeric_cols, locations_df
+from helpers.preprocessing import convert_numeric
 
 
 def clean_historical(df: pd.DataFrame):
-    df.drop(columns=['nombre', 'provincia', 'sol', 'altitud', 'presMax', 'horaPresMax', 'presMin', 'horaPresMin'],
-            inplace=True)
+    df = df.drop(columns=['nombre', 'provincia', 'altitud'])
     df = df.rename(columns={'indicativo': 'idema',
-                            'hrMax': 'hr_max', 'hrMedia': 'hr_media', 'hrMin': 'hr_min',
-                            'horaHrMax': 'hora_hr_max', 'horaHrMin': 'hora_hr_min'})
+                        'hrMax': 'hr_max', 'hrMedia': 'hr_media', 'hrMin': 'hr_min',
+                        'horaHrMax': 'hora_hr_max', 'horaHrMin': 'hora_hr_min',
+                        'presMax': 'pres_max', 'presMin': 'pres_min',
+                        'horaPresMax': 'hora_pres_max', 'horaPresMin': 'hora_pres_min',
+                        'horatmax': 'hora_tmax', 'horatmin': 'hora_tmin',
+                        'horaracha': 'hora_racha'
+                       })
 
     df = df.replace({'Varias': np.nan})
 
-    float_cols = ['tmed', 'prec', 'tmin', 'tmax', 'velmedia', 'racha']
     df[float_cols] = df[float_cols].apply(lambda x: x.str.replace(',', '.', regex=False))
     df[float_cols] = df[float_cols].apply(lambda x: x.str.strip() if x.dtype == "object" else x)
     df[float_cols] = df[float_cols].apply(pd.to_numeric, errors='coerce')
 
-    int_cols = ['hr_media', 'hr_min', 'hr_max']
     df[int_cols] = df[int_cols].apply(lambda x: x.str.strip() if x.dtype == "object" else x)
     df[int_cols] = df[int_cols].apply(pd.to_numeric, errors='coerce')
 
-    time_cols = ['horatmin', 'horatmax', 'horaracha', 'hora_hr_max', 'hora_hr_min']
     df[time_cols] = df[time_cols].apply(lambda col: pd.to_datetime(col, format='%H:%M', errors='coerce').dt.time)
-
-    zero_cols = ['dir', 'hr_max', 'hr_min', 'hr_media']
-    df[zero_cols] = df[zero_cols].fillna(0)
 
     df = df.replace({pd.NaT: None, np.nan: None, pd.NA: None})
 
     return df
 
+def provincia_avg_diario(df):
+    df = df.merge(locations_df[['idema', 'provincia_id']], on='idema', how='left')
+    cols = numeric_cols + ['provincia_id', 'fecha']
+    df = df[cols]
 
-def get_average_df(dfs: dict):
-    avg_dfs = []
-    for element, df in dfs.items():
-        avg = preprocessing.provincia_avg_diario(df, element)
-        avg_dfs.append(avg)
+    df['provincia_id'] = df['provincia_id'].astype(str)
+    df = convert_numeric(df, numeric_cols)
 
-    merged = pd.concat(avg_dfs, axis=1)
-    merged = merged.loc[:, ~merged.columns.duplicated()]
-    return merged.round(2)
+    df = df.groupby(['provincia_id', 'fecha']).agg({
+        **{col: 'mean' for col in df.select_dtypes(include=['number']).columns if col not in ['provincia_id', 'fecha']}
+    }).reset_index().round(2)
+
+    df = df.replace({pd.NaT: None, np.nan: None, pd.NA: None})
+
+    return df

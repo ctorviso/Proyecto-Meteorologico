@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 from helpers.lookups import com_names, comunidad_lookup, provincias, provincia_lookup, estacion_lookup, \
-    estaciones
+    estaciones, elements
 
 
 def estacion_filter():
@@ -42,8 +42,6 @@ def date_range_filter():
 
 
 def element_filter(selection_mode: str = "single"):
-
-    elements = ["lluvia", "temperatura", "viento", "humedad"]
 
     container = st.container()
     with container:

@@ -3,11 +3,10 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_folium import folium_static
-from src.api.routes.db_routes import elements
-from helpers.lookups import locations_df, element_cols_map, label_maps, color_maps
+from helpers.lookups import locations_df, element_cols_map_numeric, label_maps, color_maps
 from helpers.maps.folium import spain_map, create_tooltip, get_column_choropleth
 from helpers.maps.geojson import inject_col_values
-from helpers.preprocessing import provincia_avg
+from helpers.preprocessing import provincia_avg, convert_numeric
 from helpers.visualization import histograma
 from helpers import api
 from src.streamlit_app.components.filters import date_range_filter, element_filter
@@ -38,31 +37,40 @@ def graficar_histogramas():
     elemento = element_filter()
 
     if elemento:
-        columna = element_cols_map[elemento][0]
         data = api.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
-        df = pd.DataFrame(data).merge(locations_df, on="idema", how="left").sort_values("fecha")
+        if not data:
+            st.error("No hay datos disponibles para el rango seleccionado.")
+            return
 
-        if columna in df.columns:
-            fig = histograma(
-                df,
-                title=f"Histograma de {label_maps[columna]}",
-                col=columna,
-                x_label=columna
-            )
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.error(f"La columna {columna} no está disponible en los datos.")
+        df = pd.DataFrame(data).merge(locations_df, on="idema", how="left").sort_values("fecha")
+        df = convert_numeric(df, element_cols_map_numeric[elemento])
+        for columna in element_cols_map_numeric[elemento]:
+            if columna in df.columns:
+                fig = histograma(
+                    df,
+                    title=f"Histograma de {label_maps[columna]}",
+                    col=columna,
+                    x_label=columna
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.error(f"La columna {columna} no está disponible en los datos.")
 
 def graficar_scatter_matrix():
     st.header("Scatter Matrix")
     
     dfs = []
-    element_col = [v[0] for v in element_cols_map.values()]
+    scatter_elements = ['temperatura', 'lluvia', 'viento', 'humedad']
 
-    data = api.get_estaciones_historico_rango(elemento=','.join(elements), fecha_ini=fecha_inicial, fecha_fin=fecha_final)
+    data = api.get_estaciones_historico_rango(elemento=','.join(scatter_elements), fecha_ini=fecha_inicial, fecha_fin=fecha_final)
 
-    for element, col in element_cols_map.items():
-        df_var = pd.DataFrame(data)[['idema', 'fecha', col[0]]]
+    if not data:
+        st.error("No hay datos disponibles para el rango seleccionado.")
+        return
+
+    cols = [cols[0] for element, cols in element_cols_map_numeric.items() if element in scatter_elements]
+    for col in cols:
+        df_var = pd.DataFrame(data)[['idema', 'fecha', col]]
         dfs.append(df_var)
     
     df_merged_vars = reduce(
@@ -71,8 +79,8 @@ def graficar_scatter_matrix():
     )
     df_merged = df_merged_vars.merge(locations_df, on="idema", how="left")
 
-    if all(var in df_merged.columns for var in element_col):
-        fig_scatter = px.scatter_matrix(df_merged, dimensions=element_col)
+    if all(var in df_merged.columns for var in cols):
+        fig_scatter = px.scatter_matrix(df_merged, dimensions=cols)
         fig_scatter.update_traces(marker=dict(color="purple", size=6, opacity=0.7))
         fig_scatter.update_layout(
             title="Scatter Matrix de Variables Meteorológicas",
@@ -96,11 +104,11 @@ def mapa_coropletico():
         df = pd.DataFrame(data)
         avg_df = provincia_avg(df, elemento)
 
-        geojson = inject_col_values(avg_df, element_cols_map[elemento])
+        geojson = inject_col_values(avg_df, element_cols_map_numeric[elemento])
 
         maps = {}
 
-        for col in element_cols_map[elemento]:
+        for col in element_cols_map_numeric[elemento]:
             maps[col] = spain_map()
             choro = get_column_choropleth(geojson, avg_df, col, label_maps[col], color_maps[col]).add_to(maps[col])
             create_tooltip(col, label_maps[col]).add_to(choro.geojson)

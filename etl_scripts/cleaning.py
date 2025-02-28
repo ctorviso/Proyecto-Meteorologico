@@ -48,19 +48,18 @@ def provincia_avg_diario(df):
     return df
 
 
-def sort_historical_csvs():
-    historico_path = os.path.join(script_dir, '../data/historical/historico.csv')
-    historico_avg_path = os.path.join(script_dir, '../data/historical/historico_avg.csv')
+def sort_historical(year):
+    historico_path = os.path.join(script_dir, f'../data/historical/historico/{year}.csv')
 
     df = pd.read_csv(historico_path)
-    avg_df = pd.read_csv(historico_avg_path)
-
     df = df.sort_values(by="fecha")
-    avg_df = avg_df.sort_values(by=["fecha", "provincia_id"])
-
-    # make a backup before rewriting
-    os.rename(historico_path, historico_path.replace('.csv', '_backup.csv'))
-    os.rename(historico_avg_path, historico_avg_path.replace('.csv', '_backup.csv'))
-
     df.to_csv(historico_path, index=False)
+
+def sort_historico_avg(year):
+    historico_avg_path = os.path.join(script_dir, f'../data/historical/historico_avg/{year}.csv')
+
+    avg_df = pd.read_csv(historico_avg_path)
+    avg_df = avg_df.sort_values(by=["fecha", "provincia_id"])
     avg_df.to_csv(historico_avg_path, index=False)
+
+sort_historico_avg(2019)

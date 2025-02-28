@@ -101,6 +101,10 @@ def mapa_coropletico():
         st.write(f"Mapa Coroplético de {elemento} por provincia")
 
         data = api.get_estaciones_historico_rango(elemento, fecha_inicial, fecha_final)
+        if not data:
+            st.error("No hay datos disponibles para el rango seleccionado.")
+            return
+
         df = pd.DataFrame(data)
         avg_df = provincia_avg(df, elemento)
 

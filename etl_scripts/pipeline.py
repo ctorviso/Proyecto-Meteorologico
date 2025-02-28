@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import pandas as pd
 from helpers.config import script_dir
 from helpers.logging import setup_logger
-from etl_scripts.cleaning import clean_historical, provincia_avg_diario, sort_historical_csvs
+from etl_scripts.cleaning import clean_historical, provincia_avg_diario
 from etl_scripts.uploading import insert_batches
 from etl_scripts.extraction import extract_historical_data
 from src.db.db_handler import DBHandler
@@ -44,13 +44,16 @@ def filter_date_range(start_date, end_date):
 
 async def run_etl(start_date: date, end_date: date):
 
+    os.makedirs(os.path.join(script_dir, '../data/historical/historico'), exist_ok=True)
+    os.makedirs(os.path.join(script_dir, '../data/historical/historico_avg'), exist_ok=True)
+
     if start_date.year != end_date.year:
         logger.error("Start and end date must be in the same year. To process multiple years, run ETL for each year separately.")
         return
 
     logger.info(f"Running ETL for date range {start_date} to {end_date}...")
 
-    start_date, end_date = filter_date_range(start_date, end_date)
+    #start_date, end_date = filter_date_range(start_date, end_date)
     if start_date is None:
         return
 
@@ -81,8 +84,17 @@ async def run_etl(start_date: date, end_date: date):
 
     year = start_date.year
 
-    df.to_csv(os.path.join(script_dir, f'../data/historical/historico/{year}.csv'), mode='a', header=False, index=False)
-    avg_df.to_csv(os.path.join(script_dir, f'../data/historical/historico_avg/{year}.csv'), mode='a', header=False, index=False)
+    historical_path = os.path.join(script_dir, f'../data/historical/historico/{year}.csv')
+    avg_path = os.path.join(script_dir, f'../data/historical/historico_avg/{year}.csv')
+
+    if not os.path.exists(historical_path): # no data for this year yet
+        df.to_csv(historical_path, index=False)
+        avg_df.to_csv(avg_path, index=False)
+        return
+
+    # append to existing data
+    df.to_csv(historical_path, mode='a', header=False, index=False)
+    avg_df.to_csv(avg_path, mode='a', header=False, index=False)
 
     logger.info("ETL process completed.")
 
@@ -97,9 +109,8 @@ async def run_etl_latest():
 
     await run_etl(start_date, end_date)
 
-#start = date(year=2021, month=6, day=30)
-#end = date(year=2021, month=12, day=31) # inclusive
-#asyncio.run(run_etl(start, end))
+start = date(year=2018, month=1, day=1)
+end = date(year=2018, month=12, day=31) # inclusive
+asyncio.run(run_etl(start, end))
 
-asyncio.run(run_etl_latest())
-sort_historical_csvs()
+#asyncio.run(run_etl_latest())

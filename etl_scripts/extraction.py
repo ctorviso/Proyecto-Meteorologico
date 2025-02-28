@@ -21,7 +21,7 @@ async def extract_historical_data(
     all_data = []
 
     async with aiohttp.ClientSession() as session:
-        while current_start_date < end_date:
+        while current_start_date <= end_date:
 
             current_end_date = current_start_date + timedelta(days=14)
             current_end_date = min(end_date, current_end_date)

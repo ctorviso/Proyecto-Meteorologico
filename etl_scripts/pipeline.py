@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, date
 import pandas as pd
 from helpers.config import script_dir
 from helpers.logging import setup_logger
-from etl_scripts.cleaning import clean_historical, provincia_avg_diario
+from etl_scripts.cleaning import clean_historical, provincia_avg_diario, sort_historical_csvs
 from etl_scripts.uploading import insert_batches
 from etl_scripts.extraction import extract_historical_data
 from src.db.db_handler import DBHandler
@@ -45,7 +45,7 @@ def filter_date_range(start_date, end_date):
 async def run_etl(start_date: date, end_date: date):
     logger.info(f"Running ETL for date range {start_date} to {end_date}...")
 
-    start_date, end_date = filter_date_range(start_date, end_date)
+    #start_date, end_date = filter_date_range(start_date, end_date)
     if start_date is None:
         return
 
@@ -90,6 +90,9 @@ async def run_etl_latest():
 
     await run_etl(start_date, end_date)
 
-start = date(year=2023, month=2, day=8)
-end = date(year=2023, month=2, day=14)
-asyncio.run(run_etl(start, end))
+#start = date(year=2021, month=6, day=30)
+#end = date(year=2021, month=12, day=31) # inclusive
+#asyncio.run(run_etl(start, end))
+
+asyncio.run(run_etl_latest())
+sort_historical_csvs()

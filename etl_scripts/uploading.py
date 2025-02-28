@@ -26,7 +26,7 @@ def insert_batches(table, df, batch_size=10000):
         logger.info(f"Batch inserted successfully.")
 
         elapsed_time_batch = time.time() - start_time_batch
-        print(f"Batch execution time: {elapsed_time_batch:.2f} seconds")
+        logger.info(f"Batch execution time: {elapsed_time_batch:.2f} seconds")
 
     elapsed_time = time.time() - start_time
-    print(f"Total execution time for all batches: {elapsed_time:.2f} seconds")
+    logger.info(f"Total execution time for all batches: {elapsed_time:.2f} seconds")

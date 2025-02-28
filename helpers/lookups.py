@@ -51,12 +51,12 @@ element_cols = ['tmed', 'tmin', 'tmax', 'hora_tmax', 'hora_tmin',
                 'prec', 'sol',
                 'velmedia', 'racha', 'hora_racha', 'dir',
                 'hr_media', 'hr_min', 'hr_max', 'hora_hr_max', 'hora_hr_min',
-                'pres_max', 'pres_min', 'hora_pres_max', 'hora_pres_min']
+                'pres_max', 'pres_min']
 
 int_cols = ['hr_media', 'hr_min', 'hr_max']
 float_cols = ['tmed', 'tmin', 'tmax', 'prec', 'velmedia', 'racha', 'pres_max', 'pres_min', 'sol']
 numeric_cols = int_cols + float_cols
-time_cols = ['hora_tmin', 'hora_tmax', 'hora_racha', 'hora_hr_max', 'hora_hr_min', 'hora_pres_max', 'hora_pres_min']
+time_cols = ['hora_tmin', 'hora_tmax', 'hora_racha', 'hora_hr_max', 'hora_hr_min']
 
 element_cols_map_numeric = {
     'temperatura': ['tmed', 'tmax', 'tmin'],
@@ -72,15 +72,14 @@ element_cols_map = {
     'lluvia': ['prec'],
     'viento': ['velmedia', 'racha', 'hora_racha', 'dir'],
     'humedad': ['hr_media', 'hr_min', 'hr_max', 'hora_hr_max', 'hora_hr_min'],
-    'presion': ['pres_max', 'pres_min', 'hora_pres_max', 'hora_pres_min'],
+    'presion': ['pres_max', 'pres_min'],
     'sol': ['sol']
 }
 
 element_cols_map_time = {
     'temperatura': ['hora_tmax', 'hora_tmin'],
     'viento': ['hora_racha'],
-    'humedad': ['hora_hr_max', 'hora_hr_min'],
-    'presion': ['hora_pres_max', 'hora_pres_min']
+    'humedad': ['hora_hr_max', 'hora_hr_min']
 }
 
 label_maps = {
@@ -100,9 +99,7 @@ label_maps = {
     'hora_tmin': "Hora Temperatura Mínima",
     'hora_racha': "Hora Racha Viento",
     'hora_hr_max': "Hora Humedad Máxima",
-    'hora_hr_min': "Hora Humedad Mínima",
-    'hora_pres_max': "Hora Presión Máxima",
-    'hora_pres_min': "Hora Presión Mínima"
+    'hora_hr_min': "Hora Humedad Mínima"
 }
 
 color_maps = {

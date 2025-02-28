@@ -1,16 +1,17 @@
 import numpy as np
 import pandas as pd
+import os
+from helpers.config import script_dir
 from helpers.lookups import float_cols, int_cols, time_cols, numeric_cols, locations_df
 from helpers.preprocessing import convert_numeric
 
 
 def clean_historical(df: pd.DataFrame):
-    df = df.drop(columns=['nombre', 'provincia', 'altitud'])
+    df = df.drop(columns=['nombre', 'provincia', 'altitud', 'horaPresMax', 'horaPresMin'])
     df = df.rename(columns={'indicativo': 'idema',
                         'hrMax': 'hr_max', 'hrMedia': 'hr_media', 'hrMin': 'hr_min',
                         'horaHrMax': 'hora_hr_max', 'horaHrMin': 'hora_hr_min',
                         'presMax': 'pres_max', 'presMin': 'pres_min',
-                        'horaPresMax': 'hora_pres_max', 'horaPresMin': 'hora_pres_min',
                         'horatmax': 'hora_tmax', 'horatmin': 'hora_tmin',
                         'horaracha': 'hora_racha'
                        })
@@ -45,3 +46,21 @@ def provincia_avg_diario(df):
     df = df.replace({pd.NaT: None, np.nan: None, pd.NA: None})
 
     return df
+
+
+def sort_historical_csvs():
+    historico_path = os.path.join(script_dir, '../data/historical/historico.csv')
+    historico_avg_path = os.path.join(script_dir, '../data/historical/historico_avg.csv')
+
+    df = pd.read_csv(historico_path)
+    avg_df = pd.read_csv(historico_avg_path)
+
+    df = df.sort_values(by="fecha")
+    avg_df = avg_df.sort_values(by=["fecha", "provincia_id"])
+
+    # make a backup before rewriting
+    os.rename(historico_path, historico_path.replace('.csv', '_backup.csv'))
+    os.rename(historico_avg_path, historico_avg_path.replace('.csv', '_backup.csv'))
+
+    df.to_csv(historico_path, index=False)
+    avg_df.to_csv(historico_avg_path, index=False)

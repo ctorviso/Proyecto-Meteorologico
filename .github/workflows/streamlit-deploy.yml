@@ -15,4 +15,4 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           environment: "Streamlit Cloud"
           description: "Deployed to Streamlit Cloud"
-          url: "https://proyectometeorologico.streamlit.app"
+          log-url: "https://proyectometeorologico.streamlit.app"

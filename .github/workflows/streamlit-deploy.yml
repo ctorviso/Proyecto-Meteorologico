@@ -1,0 +1,33 @@
+name: Streamlit Cloud Deployment
+
+on:
+  push:
+    branches:
+      - main  # or your default branch
+
+jobs:
+  register-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create deployment
+        uses: chrnorm/deployment-action@v2
+        id: deployment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: streamlit-cloud
+          description: 'Streamlit Cloud Deployment'
+          ref: ${{ github.sha }}
+          auto_merge: false
+          transient: false
+
+      - name: Update deployment status
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          state: "success"
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          environment-url: https://proyectometeorologico.streamlit.app
+          description: "Deployed successfully to Streamlit Cloud"

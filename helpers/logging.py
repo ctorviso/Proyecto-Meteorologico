@@ -35,6 +35,8 @@ def setup_logger(log_file: str, class_name: Optional[str] = None) -> logging.Log
     logger = logging.getLogger(class_name)
     logger.setLevel(logging.DEBUG)
 
+    logger.propagate = False
+
     if not logger.handlers:
         # Create a rotating file handler
         file_handler = RotatingFileHandler(f'logs/{log_file}.log', maxBytes=10000000, backupCount=3)

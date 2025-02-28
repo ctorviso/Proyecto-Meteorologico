@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import aiohttp
 
 from helpers import config
@@ -10,8 +10,8 @@ from helpers.logging import setup_logger
 logger = setup_logger("etl_extraction")
 
 async def extract_historical_data(
-        start_date: datetime,
-        end_date: datetime,
+        start_date: date,
+        end_date: date,
         delay: int = 3,
         max_retries: int = 3
 ):
@@ -21,7 +21,7 @@ async def extract_historical_data(
     all_data = []
 
     async with aiohttp.ClientSession() as session:
-        while current_start_date <= end_date:
+        while current_start_date < end_date:
 
             current_end_date = current_start_date + timedelta(days=14)
             current_end_date = min(end_date, current_end_date)

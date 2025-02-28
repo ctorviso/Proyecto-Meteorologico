@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta, date
 import pandas as pd
 from helpers.logging import setup_logger
-from etl_scripts.cleaning import clean_historical
+from etl_scripts.cleaning import clean_historical, get_average_df
 from etl_scripts.uploading import insert_batches
 from etl_scripts.extraction import extract_historical_data
 from src.db.db_handler import DBHandler
@@ -61,34 +61,47 @@ async def run_etl(start_date: date, end_date: date):
 
     df = pd.DataFrame(data)
 
-    df['extracted'] = datetime.now().replace(second=0, microsecond=0)
+    extracted = datetime.now().replace(second=0, microsecond=0)
+    df['extracted'] = extracted
     df['uuid'] = [str(uuid.uuid4()) for _ in range(len(df))]
 
     df = clean_historical(df)
+    avg_df = get_average_df({
+        'temperatura': df[temperatura_cols + ['idema', 'fecha', 'uuid']],
+        'viento': df[viento_cols + ['idema', 'fecha', 'uuid']],
+        'humedad': df[humedad_cols + ['idema', 'fecha', 'uuid']],
+        'lluvia': df[lluvia_cols + ['idema', 'fecha', 'uuid']]
+    })
+
+    avg_df['extracted'] = extracted
+    avg_df['uuid'] = [str(uuid.uuid4()) for _ in range(len(avg_df))]
 
     start_date = datetime.strptime(df['fecha'].min(), "%Y-%m-%d")
     end_date = datetime.strptime(df['fecha'].max(), "%Y-%m-%d")
 
     start_time = time.time()
+    logger.info(f"Uploading historical data for date range {start_date} to {end_date}...")
+
+    logger.info("Uploading average data...")
+    insert_batches('historico_avg', avg_df)
 
     logger.info("Uploading metadata...")
-    insert_batches('historico_meta', df[meta_cols], start_date, end_date)
+    insert_batches('historico_meta', df[meta_cols])
 
     logger.info("Uploading temperatura...")
-    insert_batches('temperatura_historico', df[temperatura_cols], start_date, end_date)
+    insert_batches('temperatura_historico', df[temperatura_cols + ['uuid']])
 
     logger.info("Uploading viento...")
-    insert_batches('viento_historico', df[viento_cols], start_date, end_date)
+    insert_batches('viento_historico', df[viento_cols + ['uuid']])
 
     logger.info("Uploading humedad...")
-    insert_batches('humedad_historico', df[humedad_cols], start_date, end_date)
+    insert_batches('humedad_historico', df[humedad_cols + ['uuid']])
 
     logger.info("Uploading lluvia...")
-    insert_batches('lluvia_historico', df[lluvia_cols], start_date, end_date)
+    insert_batches('lluvia_historico', df[lluvia_cols + ['uuid']])
 
     elapsed_time = time.time() - start_time
-    logger.info(f"Total execution time for all tables: {elapsed_time:.4f} seconds")
-
+    logger.info(f"Total execution time for all tables: {elapsed_time:.2f} seconds")
 
 async def run_etl_latest():
     logger.info("Running ETL Latest...")
@@ -101,6 +114,6 @@ async def run_etl_latest():
 
     await run_etl(start_date, end_date)
 
-start = date(year=2023, month=1, day=1)
-end = date(year=2023, month=3, day=1)
+start = date(year=2022, month=10, day=1)
+end = date(year=2022, month=11, day=1)
 asyncio.run(run_etl(start, end))

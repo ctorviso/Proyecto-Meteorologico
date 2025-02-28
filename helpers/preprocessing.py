@@ -294,3 +294,15 @@ def provincia_avg(df, element: str):
         **{col: 'mean' for col in df.select_dtypes(include=['number']).columns if col != 'provincia_id'}
     }).reset_index()
 
+
+def provincia_avg_diario(df, element: str):
+    df = df.merge(locations_df[['idema', 'provincia_id']], on='idema', how='left')
+    cols = element_cols_map[element] + ['provincia_id', 'fecha']
+    df = df[cols]
+
+    df['provincia_id'] = df['provincia_id'].astype(str)
+    df = convert_numeric(df, element_cols_map[element])
+
+    return df.groupby(['provincia_id', 'fecha']).agg({
+        **{col: 'mean' for col in df.select_dtypes(include=['number']).columns if col not in ['provincia_id', 'fecha']}
+    }).reset_index()

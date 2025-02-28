@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from helpers import preprocessing
+
 
 def clean_historical(df: pd.DataFrame):
     df.drop(columns=['nombre', 'provincia', 'sol', 'altitud', 'presMax', 'horaPresMax', 'presMin', 'horaPresMin'],
@@ -29,3 +31,14 @@ def clean_historical(df: pd.DataFrame):
     df = df.replace({pd.NaT: None, np.nan: None, pd.NA: None})
 
     return df
+
+
+def get_average_df(dfs: dict):
+    avg_dfs = []
+    for element, df in dfs.items():
+        avg = preprocessing.provincia_avg_diario(df, element)
+        avg_dfs.append(avg)
+
+    merged = pd.concat(avg_dfs, axis=1)
+    merged = merged.loc[:, ~merged.columns.duplicated()]
+    return merged.round(2)

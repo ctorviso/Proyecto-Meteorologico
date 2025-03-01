@@ -31,7 +31,7 @@ def date_range_filter():
 
     with ini:
         fecha_ini = str(
-            st.date_input(label="Fecha inicio", value=last_week, min_value=pd.Timestamp(year=2023, month=2, day=14),
+            st.date_input(label="Fecha inicio", value=last_week,
                           max_value=pd.Timestamp.now()))  # default to last week
 
     with fin:

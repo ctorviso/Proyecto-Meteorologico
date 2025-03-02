@@ -9,7 +9,6 @@ from etl_scripts.uploading import insert_batches
 from etl_scripts.extraction import extract_historical_data
 from helpers.supabase_client import SupabaseClient
 from src.db.db_handler import DBHandler
-import asyncio
 
 logger = setup_logger("etl_pipeline")
 
@@ -39,7 +38,6 @@ def filter_date_range(start_date, end_date):
         logger.info(f"End date adjusted to {new_end_date} (before earliest DB date)")
 
     if new_start_date > new_end_date:
-        logger.info("No new data to process after filtering existing date range")
         return None, None
 
     logger.info(f"Processing filtered date range: {new_start_date} to {new_end_date}")
@@ -48,8 +46,9 @@ def filter_date_range(start_date, end_date):
 async def run_etl(start_date: date, end_date: date):
 
     if start_date.year != end_date.year:
-        logger.error("Start and end date must be in the same year. To process multiple years, run ETL for each year separately.")
-        return
+        message = "Start and end date must be in the same year. To process multiple years, run ETL for each year separately."
+        logger.error(message)
+        return message, False
 
     logger.info(f"Running ETL for date range {start_date} to {end_date}...")
 
@@ -58,12 +57,15 @@ async def run_etl(start_date: date, end_date: date):
     if db.table_exists(f'historico_{start_date.year}') and not db.is_empty(f'historico_{start_date.year}'):
         start_date, end_date = filter_date_range(start_date, end_date)
         if start_date is None:
-            return
+            message = "No new data to process after filtering existing date range"
+            logger.info(message)
+            return message, False
 
     data = await extract_historical_data(start_date, end_date)
     if len(data) == 0:
-        logger.warning("No data was extracted.")
-        return
+        message = "No data was extracted."
+        logger.warning(message)
+        return message, False
 
     df = pd.DataFrame(data)
 
@@ -100,18 +102,20 @@ async def run_etl(start_date: date, end_date: date):
     historico_path = os.path.join(historico_path, f'{year}.csv')
     avg_path = os.path.join(avg_path, f'{year}.csv')
 
-    if not os.path.exists(historico_path): # no data for this year yet
+    if not os.path.exists(historico_path):
+        # no data for this year yet
         df.to_csv(historico_path, index=False)
         avg_df.to_csv(avg_path, index=False)
-        return
+    else:
+        # append to existing data
+        df.to_csv(historico_path, mode='a', header=False, index=False)
+        avg_df.to_csv(avg_path, mode='a', header=False, index=False)
 
-    # append to existing data
-    df.to_csv(historico_path, mode='a', header=False, index=False)
-    avg_df.to_csv(avg_path, mode='a', header=False, index=False)
+    message = "ETL process completed."
+    logger.info(message)
+    return message, True
 
-    logger.info("ETL process completed.")
-
-async def run_etl_latest():
+async def run_etl_latest(origin: str):
     logger.info("Running ETL Latest...")
 
     db = DBHandler()
@@ -120,7 +124,17 @@ async def run_etl_latest():
     start_date = current_latest + timedelta(days=1)
     end_date = datetime.now().date()
 
-    await run_etl(start_date, end_date)
+    try:
+        msg, new = await run_etl(start_date, end_date)
+        failure = False
+    except Exception as e:
+        msg, new = e, False
+        failure = True
+
+    db.update_latest_fetch(origin, new, failure, msg)
+
+    status = 500 if failure else 200
+    return msg, status
 
 async def extract_year(year: int):
 
@@ -143,6 +157,3 @@ async def extract_year(year: int):
 
     sb.upload_file(historico_path, 'historical', f"historico/{year}.csv")
     sb.upload_file(avg_path, 'historical', f"historico_avg/{year}.csv")
-
-
-asyncio.run(run_etl_latest())

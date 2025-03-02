@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta, date
+from typing import Optional
 import pandas as pd
 import numpy as np
+from src.db.db_handler import DBHandler
 from helpers.lookups import element_cols_map, locations_df
 
 def format_fecha(fecha_str: str, _format: str = "%Y-%m-%d") -> str:
@@ -15,6 +17,38 @@ def format_fecha(fecha_str: str, _format: str = "%Y-%m-%d") -> str:
     dt = datetime.strptime(fecha_str, _format)
     return f"{dt.day} {meses[dt.month - 1]} {dt.year}"
 
+def truncate_date_range(fecha_ini: Optional[str], fecha_fin: Optional[str]):
+    db = DBHandler()
+
+    earliest = db.get_earliest_historical_date()
+    latest = db.get_latest_historical_date()
+
+    if fecha_ini is None and fecha_fin is None:
+        fecha_ini = (latest - timedelta(days=365)).isoformat()
+        fecha_fin = latest.isoformat()
+        return fecha_ini, fecha_fin
+
+    if fecha_ini is None:
+        fecha_ini = earliest
+    else:
+        fecha_ini = date.fromisoformat(fecha_ini)
+
+    if fecha_fin is None:
+        fecha_fin = latest
+    else:
+        fecha_fin = date.fromisoformat(fecha_fin)
+
+    if fecha_ini > fecha_fin:
+        temp = fecha_ini
+        fecha_ini = fecha_fin
+        fecha_fin = temp
+
+    diff = fecha_fin - fecha_ini
+
+    if diff.days > 365:
+        fecha_ini = fecha_fin - timedelta(days=365)
+
+    return fecha_ini.isoformat(), fecha_fin.isoformat()
 
 def convert_latitude(lat):
     # Extract degrees and minutes

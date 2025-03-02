@@ -2,7 +2,7 @@ import datetime
 from typing import Optional, List, Union
 import psycopg2
 import psycopg2.extensions
-from sqlalchemy import create_engine, text, Table, MetaData
+from sqlalchemy import create_engine, text, Table, MetaData, inspect
 from helpers.config import get_env_var
 from helpers.logger import setup_logger
 
@@ -98,9 +98,15 @@ class DBHandler:
             result = connection.execute(query, {"table_name": table_name})
             return [dict(zip(result.keys(), row)) for row in result]
 
-    def get_columns(self, table_name: str, column_names: list):
+    def get_column_names(self, table_name: str):
+        inspector = inspect(self.engine)
+        return inspector.get_columns(table_name)
+
+    def get_columns(self, table_name: str, columns: Optional[list]):
         """Consulta de datos de una columna en la base de datos"""
-        columns = ', '.join(column_names)
+        if not columns or len(columns) == 0:
+            return self.get_table(table_name)
+        columns = ', '.join(columns)
         query = text(f"SELECT {columns} FROM {table_name}")
         with self.engine.connect() as connection:
             result = connection.execute(query)
@@ -272,3 +278,17 @@ class DBHandler:
             self.execute(query, {"earliest_year": earliest_year, "latest_year": year})
 
         self.logger.info("Historico view updated.")
+
+    def update_latest_fetch(self, origin: str, new_data_fetched: bool, failure: bool, message: str):
+        data = {
+            'origin': [origin],
+            'new_data_fetched': [new_data_fetched],
+            'failure': [failure],
+            'message': [message]
+        }
+        self.insert_data('latest_fetch', data)
+        self.logger.info("Updated latest fetch")
+
+    def get_latest_fetch(self):
+        query = "SELECT * FROM latest_fetch WHERE fetched = (SELECT MAX(fetched) FROM latest_fetch);"
+        return self.fetch(query, {})

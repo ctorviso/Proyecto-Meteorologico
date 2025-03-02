@@ -1,32 +1,36 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
+from etl_scripts.pipeline import run_etl_latest
 from helpers.lookups import element_cols_map, elements, element_cols_map_numeric
+from helpers.preprocessing import truncate_date_range
 from src.db.db_handler import DBHandler
 
 db = DBHandler()
 router = APIRouter()
 
-table_names = ["estaciones", "provincias", "comunidades_autonomas"]
+table_names = ["estaciones", "provincias", "comunidades_autonomas", 'historico', 'historico_avg']
 
 # Dynamic route creation
 for table in table_names:
     def make_table_route(table_name: str):
-        def route_handler():
-            return db.get_table(table_name)
+        def get_table(columns: Optional[str] = None):
+            columns = columns.replace(' ', '') if columns else None
+            columns = columns.split(',') if columns else None
+            return db.get_columns(table_name, columns)
 
-        return route_handler
+        return get_table
 
+    def make_schema_route(table_name: str):
+        def get_schema():
+            return db.get_schema(table_name)
 
-    def make_columns_route(table_name: str):
-        def route_handler(columns: str):
-            return db.get_columns(table_name, columns.split(","))
+        return get_schema
 
-        return route_handler
+    if table not in ['historico', 'historico_avg']:
+        router.add_api_route(f"/table/{table}", make_table_route(table), methods=["GET"])
+    router.add_api_route(f"/schema/{table}", make_schema_route(table), methods=["GET"])
 
-
-    router.add_api_route(f"/{table}", make_table_route(table), methods=["GET"])
-    router.add_api_route(f"/{table}/columns", make_columns_route(table), methods=["GET"])
 
 elementos_query = Query(None,
     title="Elementos",
@@ -68,13 +72,18 @@ def get_historico(
         fecha_ini: Optional[str] = fecha_ini_query,
         fecha_fin: Optional[str] = fecha_fin_query
 ):
-    all_cols = []
-    for element in elementos.lower().split(","):
-        all_cols.extend(element_cols_map[element.strip()])
+    all_cols = [] if elementos else None
+    if elementos:
+        for element in elementos.lower().split(","):
+            all_cols.extend(element_cols_map[element.strip()])
+        all_cols += ["idema", "fecha"]
+
     idemas = idemas.replace(" ", "") if idemas else None
     fecha_ini = fecha_ini.strip() if fecha_ini else None
     fecha_fin = fecha_fin.strip() if fecha_fin else None
-    all_cols += ["idema", "fecha"]
+
+    fecha_ini, fecha_fin = truncate_date_range(fecha_ini, fecha_fin)
+
     return db.get_historico(all_cols, idemas, fecha_ini, fecha_fin)
 
 @router.get("/historico_average")
@@ -84,11 +93,26 @@ def get_historico_average(
         fecha_ini: Optional[str] = fecha_ini_query,
         fecha_fin: Optional[str] = fecha_fin_query
 ):
-    all_cols = []
-    for element in elementos.lower().split(","):
-        all_cols.extend(element_cols_map_numeric[element.strip()])
+    all_cols = [] if elementos else None
+    if elementos:
+        for element in elementos.lower().split(","):
+            all_cols.extend(element_cols_map_numeric[element.strip()])
+        all_cols += ["provincia_id", "fecha"]
+
     provincia_ids = provincia_ids.replace(" ", "") if provincia_ids else None
     fecha_ini = fecha_ini.strip() if fecha_ini else None
     fecha_fin = fecha_fin.strip() if fecha_fin else None
-    all_cols += ["provincia_id", "fecha"]
+
+    fecha_ini, fecha_fin = truncate_date_range(fecha_ini, fecha_fin)
+
     return db.get_historico_average(all_cols, provincia_ids, fecha_ini, fecha_fin)
+
+
+@router.get("/historico/fetch-latest")
+async def fetch_latest_historical(request: Request):
+    response = await run_etl_latest(request.client.host)
+    return {'message': response}
+
+@router.get("/historico/latest-fetch")
+def get_latest_fetch():
+    return db.get_latest_fetch()

@@ -1,7 +1,7 @@
 import json
 import aiohttp
 from helpers.http_request import get_async
-from helpers.logging import setup_logger
+from helpers.logger import setup_logger
 
 
 def _format_fecha(fecha: str):
@@ -28,6 +28,7 @@ class AEMETClient:
     }
 
     _instance = None
+    _api_key = None
 
     def __new__(cls, api_key: str):
         if cls._instance is None:
@@ -36,22 +37,27 @@ class AEMETClient:
         return cls._instance
 
     def _initialize(self, api_key: str):
-        self._api_key = api_key
-        self._headers = {'api_key': api_key}
         self.logger = setup_logger("aemet_client")
+        self.set_api_key(api_key)
+
+    def set_api_key(self, api_key: str):
+        self._api_key = api_key
+
+    def _headers(self):
+        return {'api_key': self._api_key}
 
     async def _make_request(self, session: aiohttp.ClientSession, endpoint: str, **kwargs):
         url = self.BASE_URL + endpoint.format(**kwargs)
         self.logger.info(f"Making request to {url}")
 
-        response = await get_async(url=url, session=session, headers=self._headers)
+        response = await get_async(url=url, session=session, headers=self._headers())
         if response[0]['estado'] == 404:
             raise ValueError(f"Resource not found: {response[0]['descripcion']}")
 
         self.logger.info(f"Response: {response}")
 
-        datos = await get_async(url=response[0]['datos'], session=session, headers=self._headers)
-        metadatos = await get_async(url=response[0]['metadatos'], session=session, headers=self._headers)
+        datos = await get_async(url=response[0]['datos'], session=session, headers=self._headers())
+        metadatos = await get_async(url=response[0]['metadatos'], session=session, headers=self._headers())
 
         return {
             'datos': datos,

@@ -3,10 +3,11 @@ import os
 from datetime import datetime, timedelta, date
 import pandas as pd
 from helpers.config import script_dir
-from helpers.logging import setup_logger
-from etl_scripts.cleaning import clean_historical, provincia_avg_diario
+from helpers.logger import setup_logger
+from etl_scripts.cleaning import clean_historical, provincia_avg_diario, sort_historico_avg
 from etl_scripts.uploading import insert_batches
 from etl_scripts.extraction import extract_historical_data
+from helpers.supabase_client import SupabaseClient
 from src.db.db_handler import DBHandler
 import asyncio
 
@@ -15,8 +16,10 @@ logger = setup_logger("etl_pipeline")
 def filter_date_range(start_date, end_date):
     db = DBHandler()
 
-    db_earliest_date = db.get_earliest_historical_date()
-    db_latest_date = db.get_latest_historical_date()
+    year = start_date.year
+
+    db_earliest_date = db.get_earliest_historical_date(year)
+    db_latest_date = db.get_latest_historical_date(year)
 
     if end_date < db_earliest_date or start_date > db_latest_date:
         logger.info("Requested date range is outside existing data. Processing full range.")
@@ -44,18 +47,18 @@ def filter_date_range(start_date, end_date):
 
 async def run_etl(start_date: date, end_date: date):
 
-    os.makedirs(os.path.join(script_dir, '../data/historical/historico'), exist_ok=True)
-    os.makedirs(os.path.join(script_dir, '../data/historical/historico_avg'), exist_ok=True)
-
     if start_date.year != end_date.year:
         logger.error("Start and end date must be in the same year. To process multiple years, run ETL for each year separately.")
         return
 
     logger.info(f"Running ETL for date range {start_date} to {end_date}...")
 
-    #start_date, end_date = filter_date_range(start_date, end_date)
-    if start_date is None:
-        return
+    db = DBHandler()
+
+    if db.table_exists(f'historico_{start_date.year}') and not db.is_empty(f'historico_{start_date.year}'):
+        start_date, end_date = filter_date_range(start_date, end_date)
+        if start_date is None:
+            return
 
     data = await extract_historical_data(start_date, end_date)
     if len(data) == 0:
@@ -70,11 +73,17 @@ async def run_etl(start_date: date, end_date: date):
     start_date = datetime.strptime(df['fecha'].min(), "%Y-%m-%d")
     end_date = datetime.strptime(df['fecha'].max(), "%Y-%m-%d")
 
-    start_time = time.time()
-    logger.info(f"Uploading historical data for date range {start_date} to {end_date}...")
+    year = start_date.year
 
-    logger.info("Uploading historico...")
-    insert_batches('historico', df)
+    start_time = time.time()
+    logger.info(f"Uploading historical data for date range {start_date.date()} to {end_date.date()}...")
+
+    if not db.table_exists(f'historico_{year}'):
+        db.create_historical_table(year)
+
+    table = f"historico_{year}"
+    logger.info(f"Uploading historico_{year}...")
+    insert_batches(table, df)
 
     logger.info("Uploading historico_avg...")
     insert_batches('historico_avg', avg_df)
@@ -82,18 +91,22 @@ async def run_etl(start_date: date, end_date: date):
     elapsed_time = time.time() - start_time
     logger.info(f"Total execution time for all tables: {elapsed_time:.2f} seconds")
 
-    year = start_date.year
+    historico_path = os.path.join(script_dir, '../data/historical/historico')
+    avg_path = os.path.join(script_dir, '../data/historical/historico_avg')
 
-    historical_path = os.path.join(script_dir, f'../data/historical/historico/{year}.csv')
-    avg_path = os.path.join(script_dir, f'../data/historical/historico_avg/{year}.csv')
+    os.makedirs(historico_path, exist_ok=True)
+    os.makedirs(avg_path, exist_ok=True)
 
-    if not os.path.exists(historical_path): # no data for this year yet
-        df.to_csv(historical_path, index=False)
+    historico_path = os.path.join(historico_path, f'{year}.csv')
+    avg_path = os.path.join(avg_path, f'{year}.csv')
+
+    if not os.path.exists(historico_path): # no data for this year yet
+        df.to_csv(historico_path, index=False)
         avg_df.to_csv(avg_path, index=False)
         return
 
     # append to existing data
-    df.to_csv(historical_path, mode='a', header=False, index=False)
+    df.to_csv(historico_path, mode='a', header=False, index=False)
     avg_df.to_csv(avg_path, mode='a', header=False, index=False)
 
     logger.info("ETL process completed.")
@@ -109,8 +122,27 @@ async def run_etl_latest():
 
     await run_etl(start_date, end_date)
 
-start = date(year=2018, month=1, day=1)
-end = date(year=2018, month=12, day=31) # inclusive
-asyncio.run(run_etl(start, end))
+async def extract_year(year: int):
 
-#asyncio.run(run_etl_latest())
+    start = date(year=year, month=1, day=1)
+    end = date(year=year, month=6, day=28)  # inclusive
+
+    await run_etl(start, end)
+
+    start = date(year=year, month=6, day=29)
+    end = date(year=year, month=12, day=31)  # inclusive
+
+    await run_etl(start, end)
+
+    sort_historico_avg(year)
+
+    sb = SupabaseClient()
+
+    historico_path = os.path.join(script_dir, f'../data/historical/historico/{year}.csv')
+    avg_path = os.path.join(script_dir, f'../data/historical/historico_avg/{year}.csv')
+
+    sb.upload_file(historico_path, 'historical', f"historico/{year}.csv")
+    sb.upload_file(avg_path, 'historical', f"historico_avg/{year}.csv")
+
+
+asyncio.run(run_etl_latest())

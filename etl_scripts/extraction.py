@@ -4,7 +4,7 @@ import aiohttp
 
 from helpers import config
 from helpers.aemet_client import AEMETClient
-from helpers.logging import setup_logger
+from helpers.logger import setup_logger
 
 
 logger = setup_logger("etl_extraction")
@@ -12,10 +12,11 @@ logger = setup_logger("etl_extraction")
 async def extract_historical_data(
         start_date: date,
         end_date: date,
-        delay: int = 3,
-        max_retries: int = 3
+        delay: int = 2,
+        max_retries: int = 5
 ):
-    client = AEMETClient(config.get_env_var("AEMET_API_KEY"))
+    current = 1
+    client = AEMETClient(config.get_env_var(f"AEMET_API_KEY_{current}"))
     current_start_date = start_date
     end_date = min(datetime.now().date(), end_date)
     all_data = []
@@ -61,6 +62,8 @@ async def extract_historical_data(
                     logger.info(f"Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
                     await asyncio.sleep(delay)
                     delay *= 2
+                    current = (current % 3) + 1
+                    client.set_api_key(config.get_env_var(f"AEMET_API_KEY_{current}"))
                     continue
 
     return all_data

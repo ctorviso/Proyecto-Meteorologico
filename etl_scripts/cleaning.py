@@ -61,5 +61,3 @@ def sort_historico_avg(year):
     avg_df = pd.read_csv(historico_avg_path)
     avg_df = avg_df.sort_values(by=["fecha", "provincia_id"])
     avg_df.to_csv(historico_avg_path, index=False)
-
-sort_historico_avg(2019)

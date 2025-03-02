@@ -1,5 +1,5 @@
 import time
-from helpers.logging import setup_logger
+from helpers.logger import setup_logger
 from src.db.db_handler import DBHandler
 
 logger = setup_logger("etl_uploading")

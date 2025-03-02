@@ -1,9 +1,9 @@
 import asyncio
 from datetime import datetime, timedelta, date
 import aiohttp
-
 from helpers import config
 from helpers.aemet_client import AEMETClient
+from helpers.config import get_env_var
 from helpers.logger import setup_logger
 
 
@@ -15,8 +15,20 @@ async def extract_historical_data(
         delay: int = 2,
         max_retries: int = 5
 ):
-    current = 1
-    client = AEMETClient(config.get_env_var(f"AEMET_API_KEY_{current}"))
+    cycle_api_key = get_env_var("AEMET_API_KEY_1") is not None
+    logger.info(f"Cycle API Key: {cycle_api_key}")
+    num_keys = 1
+
+    if cycle_api_key:
+        current = 1
+        client = AEMETClient(get_env_var(f"AEMET_API_KEY_{current}"))
+        while get_env_var(f"AEMET_API_KEY_{num_keys+1}") is not None:
+            num_keys += 1
+        logger.info(f"Number of API keys: {num_keys}")
+    else:
+        client = AEMETClient(get_env_var(f"AEMET_API_KEY"))
+
+
     current_start_date = start_date
     end_date = min(datetime.now().date(), end_date)
     all_data = []
@@ -40,6 +52,7 @@ async def extract_historical_data(
                 logger.info(f"Attempt {attempt + 1}/{max_retries}")
 
                 try:
+                    # noinspection PyUnresolvedReferences
                     data = await client.get_historico_todas_estaciones(session, start_date, current_end_date)
 
                     if data is not None:
@@ -62,8 +75,9 @@ async def extract_historical_data(
                     logger.info(f"Retrying in {delay} seconds... (Attempt {attempt + 1}/{max_retries})")
                     await asyncio.sleep(delay)
                     delay *= 2
-                    current = (current % 3) + 1
-                    client.set_api_key(config.get_env_var(f"AEMET_API_KEY_{current}"))
+                    if cycle_api_key:
+                        current = (current % num_keys) + 1
+                        client.set_api_key(config.get_env_var(f"AEMET_API_KEY_{current}"))
                     continue
 
     return all_data

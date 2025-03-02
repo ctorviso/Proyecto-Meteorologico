@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Query, Request
 from etl_scripts.pipeline import run_etl_latest
+from helpers.config import get_env_var
 from helpers.lookups import element_cols_map, elements, element_cols_map_numeric
 from helpers.preprocessing import truncate_date_range
 from src.db.db_handler import DBHandler
@@ -110,6 +111,8 @@ def get_historico_average(
 
 @router.get("/historico/fetch-latest")
 async def fetch_latest_historical(request: Request):
+    if not get_env_var("AEMET_API_KEY") and not get_env_var("AEMET_API_KEY_1"):
+        return {'message': 'No AEMET API Key is present.'}
     response = await run_etl_latest(request.client.host)
     return {'message': response}
 

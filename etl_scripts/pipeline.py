@@ -128,7 +128,7 @@ async def run_etl_latest(origin: str):
         msg, new = await run_etl(start_date, end_date)
         failure = False
     except Exception as e:
-        msg, new = e, False
+        msg, new = str(e), False
         failure = True
 
     db.update_latest_fetch(origin, new, failure, msg)

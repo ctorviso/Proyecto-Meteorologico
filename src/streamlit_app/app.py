@@ -28,7 +28,7 @@ def main():
         ],
     }
 
-    check_latest()
+    #check_latest()
 
     pg = st.navigation(pages)
     pg.run()

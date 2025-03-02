@@ -1,5 +1,6 @@
-import pandas as pd
+import datetime
 import streamlit as st
+from src.db.db_handler import DBHandler
 from helpers.lookups import com_names, comunidad_lookup, provincias, provincia_lookup, estacion_lookup, \
     estaciones, elements
 
@@ -25,18 +26,24 @@ def estacion_filter():
 
 
 def date_range_filter():
-    last_week = pd.Timestamp.now() - pd.DateOffset(weeks=2)
+    db = DBHandler()
+
+    earliest = db.get_earliest_historical_date()
+    latest = db.get_latest_historical_date()
+
+    default_ini = (latest - datetime.timedelta(weeks=2)).isoformat()
+    default_fin = latest.isoformat()
+
+    earliest = earliest.strftime("%Y-%m-%d")
+    latest = latest.strftime("%Y-%m-%d")
 
     ini, _, fin, _ = st.columns([2,1,2,1])
 
     with ini:
-        fecha_ini = str(
-            st.date_input(label="Fecha inicio", value=last_week, min_value=pd.Timestamp(year=2023, month=2, day=14),
-                          max_value=pd.Timestamp.now()))  # default to last week
+        fecha_ini = str(st.date_input(label="Fecha inicio", value=default_ini, min_value=earliest, max_value=latest))
 
     with fin:
-        fecha_fin = str(st.date_input(label="Fecha fin", value=pd.Timestamp.now(), max_value=pd.Timestamp.now(),
-                                      min_value=fecha_ini))
+        fecha_fin = str(st.date_input(label="Fecha fin", value=default_fin, min_value=fecha_ini, max_value=latest))
 
     return fecha_ini, fecha_fin
 

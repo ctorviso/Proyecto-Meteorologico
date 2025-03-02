@@ -109,6 +109,15 @@ def get_historico_average(
     return db.get_historico_average(all_cols, provincia_ids, fecha_ini, fecha_fin)
 
 
+@router.get("/historico/date/earliest")
+def get_earliest_historical_date():
+    return db.get_earliest_historical_date()
+
+@router.get("/historico/date/latest")
+def get_latest_historical_date():
+    return db.get_latest_historical_date()
+
+
 @router.get("/historico/fetch-latest")
 async def fetch_latest_historical(request: Request):
     if not get_env_var("AEMET_API_KEY") and not get_env_var("AEMET_API_KEY_1"):

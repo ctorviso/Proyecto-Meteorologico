@@ -3,6 +3,8 @@ from helpers.http_request import get
 
 table_url = api_url + "/db/{table}"
 historico_url = api_url + "/db/historico"
+historico_earliest_url = api_url + "/db/historico/date/earliest"
+historico_latest_url = api_url + "/db/historico/date/latest"
 latest_fetch_url = api_url + "/db/historico/latest-fetch"
 fetch_latest_url = api_url + "/db/historico/fetch-latest"
 
@@ -41,6 +43,12 @@ def get_estaciones_historico_rango(elemento: str, fecha_ini: str, fecha_fin: str
         'fecha_fin': fecha_fin
     }
     return get(url=historico_url, params=params)[0]
+
+def get_earliest_historical_date():
+    return get(url=historico_earliest_url)[0]
+
+def get_latest_historical_date():
+    return get(url=historico_latest_url)[0]
 
 def get_latest_fetch():
     return get(url=latest_fetch_url)[0][0]

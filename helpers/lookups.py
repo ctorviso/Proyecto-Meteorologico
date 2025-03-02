@@ -61,7 +61,7 @@ time_cols = ['hora_tmin', 'hora_tmax', 'hora_racha', 'hora_hr_max', 'hora_hr_min
 element_cols_map_numeric = {
     'temperatura': ['tmed', 'tmax', 'tmin'],
     'lluvia': ['prec'],
-    'viento': ['velmedia'],
+    'viento': ['velmedia', 'racha'],
     'humedad': ['hr_media', 'hr_min', 'hr_max'],
     'presion': ['pres_max', 'pres_min'],
     'sol': ['sol']
@@ -102,7 +102,7 @@ label_maps = {
     'hora_hr_min': "Hora Humedad Mínima"
 }
 
-color_maps = {
+choropleth_color_maps = {
     'tmed': "RdYlBu_r",
     'tmin': "RdYlBu_r",
     'tmax': "RdYlBu_r",
@@ -115,4 +115,19 @@ color_maps = {
     'pres_max': "Purples",
     'pres_min': "Purples",
     'sol': "YlOrBr"
+}
+
+histogram_color_maps = {
+    'tmed': "Orange",
+    'tmin': "Yellow",
+    'tmax': "Red",
+    'prec': "Blue",
+    'velmedia': "LightGreen",
+    'racha': "Green",
+    'hr_media': "Cyan",
+    'hr_min': "LightBlue",
+    'hr_max': "Blue",
+    'pres_max': "Purple",
+    'pres_min': "Pink",
+    'sol': "Orange"
 }

@@ -1,6 +1,15 @@
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 
-def histograma(df, title: str, col: str, x_label: str, y_label: str = "Frecuencia"):
+def histogram(
+        df,
+        title: str,
+        col: str,
+        x_label: str,
+        y_label: str = "Frecuencia"
+) -> go.Figure:
+
     fig = px.histogram(
         df,
         x=col,
@@ -19,4 +28,82 @@ def histograma(df, title: str, col: str, x_label: str, y_label: str = "Frecuenci
         xaxis_title=x_label,
         yaxis_title=y_label
     )
+    return fig
+
+
+def histograms(
+        df: pd.DataFrame,
+        title: str,
+        cols: list,
+        colors: list,
+        x_label: str,
+        y_label: str = "Frecuencia",
+        nbins: int = 20
+) -> go.Figure:
+
+    fig = px.histogram(
+        df,
+        x=cols[0],
+        nbins=nbins,
+        title=title,
+        template="plotly_white"
+    )
+
+    fig.data = []
+
+    for i, col in enumerate(cols):
+        fig.add_trace(
+            go.Histogram(
+                x=df[col],
+                name=col,
+                nbinsx=nbins,
+                marker_color=colors[i],
+                opacity=0.85,
+                histnorm='probability density'
+            )
+        )
+
+    fig.update_layout(
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        barmode='group',
+        bargap=0.1,
+        bargroupgap=0,
+        title_x=0.5
+    )
+
+    if len(cols) > 1:
+        all_data = []
+        for col in cols:
+            all_data.extend(df[col].dropna().tolist())
+
+        min_val = min(all_data)
+        max_val = max(all_data)
+        bin_width = (max_val - min_val) / nbins
+
+        for trace in fig.data:
+            trace.xbins = dict(
+                start=min_val,
+                end=max_val,
+                size=bin_width
+            )
+
+    return fig
+
+def scatter_matrix(
+        df: pd.DataFrame,
+        cols: list,
+        title: str,
+        color: str
+) -> go.Figure:
+
+    fig = px.scatter_matrix(df, dimensions=cols)
+    fig.update_traces(marker=dict(color=color, size=6, opacity=0.7))
+
+    fig.update_layout(
+        title=title,
+        width=1300,
+        height=1300
+    )
+
     return fig

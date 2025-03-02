@@ -21,7 +21,12 @@ with st.columns([1, 3, 1])[1]:
 st.markdown("<br>", unsafe_allow_html=True)
 
 with st.spinner("Cargando datos..."):
-    data = api.get_estacion_historico_rango(idema, ','.join(elements), fecha_ini, fecha_fin)
+    data = api.get_historico(
+        idemas=[idema],
+        fecha_ini=fecha_ini,
+        fecha_fin=fecha_fin
+    )
+
     if data:
         st.success("Datos obtenidos correctamente.")
         df = pd.DataFrame(data)

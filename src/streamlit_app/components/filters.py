@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import streamlit as st
 from helpers.lookups import com_names, comunidad_lookup, provincias, provincia_lookup, estacion_lookup, \
     estaciones, elements
@@ -30,7 +30,10 @@ def date_range_filter():
     earliest = api.get_earliest_historical_date()
     latest = api.get_latest_historical_date()
 
-    default_ini = (latest - datetime.timedelta(weeks=2)).isoformat()
+    earliest = datetime.fromisoformat(earliest)
+    latest = datetime.fromisoformat(latest)
+
+    default_ini = (latest - timedelta(weeks=2)).isoformat()  
     default_fin = latest.isoformat()
 
     earliest = earliest.strftime("%Y-%m-%d")

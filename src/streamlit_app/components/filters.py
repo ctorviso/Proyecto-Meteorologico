@@ -3,6 +3,7 @@ import streamlit as st
 from src.db.db_handler import DBHandler
 from helpers.lookups import com_names, comunidad_lookup, provincias, provincia_lookup, estacion_lookup, \
     estaciones, elements
+from helpers import api
 
 
 def estacion_filter():
@@ -26,10 +27,9 @@ def estacion_filter():
 
 
 def date_range_filter():
-    db = DBHandler()
 
-    earliest = db.get_earliest_historical_date()
-    latest = db.get_latest_historical_date()
+    earliest = api.get_earliest_historical_date()
+    latest = api.get_latest_historical_date()
 
     default_ini = (latest - datetime.timedelta(weeks=2)).isoformat()
     default_fin = latest.isoformat()

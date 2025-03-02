@@ -2,7 +2,7 @@ from time import sleep
 import aiohttp
 import requests
 
-from helpers.logging import setup_logger
+from helpers.logger import setup_logger
 
 logger = setup_logger('http_requests')
 

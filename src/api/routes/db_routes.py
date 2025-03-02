@@ -1,8 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Query
-
-from helpers.lookups import element_cols_map, elements
+from helpers.lookups import element_cols_map, elements, element_cols_map_numeric
 from src.db.db_handler import DBHandler
 
 db = DBHandler()
@@ -36,9 +35,15 @@ elementos_query = Query(None,
 )
 
 idemas_query = Query(None,
-    title="IDEMA",
+    title="IDEMAs",
     description="IDEMAs de las estaciones a mostrar separados por coma. Ejemplos: 3129, 1387",
     alias="idema"
+)
+
+provincia_ids_query = Query(None,
+    title="Provincia IDs",
+    description="IDs de las provincias a mostrar separados por coma. Ejemplos: 28, 15",
+    alias="provincia_id"
 )
 
 today = datetime.now().strftime('%Y-%m-%d')
@@ -71,3 +76,19 @@ def get_historico(
     fecha_fin = fecha_fin.strip() if fecha_fin else None
     all_cols += ["idema", "fecha"]
     return db.get_historico(all_cols, idemas, fecha_ini, fecha_fin)
+
+@router.get("/historico_average")
+def get_historico_average(
+        elementos: Optional[str] = elementos_query,
+        provincia_ids: Optional[str] = provincia_ids_query,
+        fecha_ini: Optional[str] = fecha_ini_query,
+        fecha_fin: Optional[str] = fecha_fin_query
+):
+    all_cols = []
+    for element in elementos.lower().split(","):
+        all_cols.extend(element_cols_map_numeric[element.strip()])
+    provincia_ids = provincia_ids.replace(" ", "") if provincia_ids else None
+    fecha_ini = fecha_ini.strip() if fecha_ini else None
+    fecha_fin = fecha_fin.strip() if fecha_fin else None
+    all_cols += ["provincia_id", "fecha"]
+    return db.get_historico_average(all_cols, provincia_ids, fecha_ini, fecha_fin)

@@ -67,6 +67,8 @@ element_cols_map_numeric = {
     'sol': ['sol']
 }
 
+scatter_cols = ['tmed', 'prec', 'velmedia', 'hr_media', 'pres_max', 'sol']
+
 element_cols_map = {
     'temperatura': ['tmed', 'tmax', 'tmin', 'hora_tmax', 'hora_tmin'],
     'lluvia': ['prec'],
@@ -103,25 +105,25 @@ label_maps = {
 }
 
 choropleth_color_maps = {
-    'tmed': "RdYlBu_r",
-    'tmin': "RdYlBu_r",
-    'tmax': "RdYlBu_r",
+    'tmed': "Oranges",
+    'tmin': "OrRd",
+    'tmax': "Reds",
     'prec': "Blues",
     'velmedia': "BuGn",
     'racha': "BuGn",
-    'hr_media': "Greens",
-    'hr_min': "Greens",
-    'hr_max': "Greens",
-    'pres_max': "Purples",
+    'hr_media': "YlGnBu",
+    'hr_min': "Blues",
+    'hr_max': "PuBu",
+    'pres_max': "BuPu",
     'pres_min': "Purples",
-    'sol': "YlOrBr"
+    'sol': "YlOrRd"
 }
 
 histogram_color_maps = {
     'tmed': "Orange",
     'tmin': "Yellow",
     'tmax': "Red",
-    'prec': "Blue",
+    'prec': "LightBlue",
     'velmedia': "LightGreen",
     'racha': "Green",
     'hr_media': "Cyan",
@@ -129,5 +131,14 @@ histogram_color_maps = {
     'hr_max': "Blue",
     'pres_max': "Purple",
     'pres_min': "Pink",
-    'sol': "Orange"
+    'sol': "Yellow"
+}
+
+scatter_color_maps = {
+    'temperatura': 'Orange',
+    'lluvia': 'LightBlue',
+    'viento': 'Green',
+    'humedad': 'Cyan',
+    'presion': 'Purple',
+    'sol': 'Yellow'
 }

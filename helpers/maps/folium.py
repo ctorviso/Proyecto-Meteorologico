@@ -4,7 +4,8 @@ import folium
 def spain_map():
     m = folium.Map(
         location=[36, -7],
-        zoom_start=5
+        zoom_start=5,
+        tiles=None
     )
     return m
 

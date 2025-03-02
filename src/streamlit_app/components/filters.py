@@ -39,13 +39,9 @@ def date_range_filter():
     earliest = earliest.strftime("%Y-%m-%d")
     latest = latest.strftime("%Y-%m-%d")
 
-    ini, _, fin, _ = st.columns([2,1,2,1])
+    fecha_ini = str(st.date_input(label="Fecha inicio", value=default_ini, min_value=earliest, max_value=latest))
 
-    with ini:
-        fecha_ini = str(st.date_input(label="Fecha inicio", value=default_ini, min_value=earliest, max_value=latest))
-
-    with fin:
-        fecha_fin = str(st.date_input(label="Fecha fin", value=default_fin, min_value=fecha_ini, max_value=latest))
+    fecha_fin = str(st.date_input(label="Fecha fin", value=default_fin, min_value=fecha_ini, max_value=latest))
 
     return fecha_ini, fecha_fin
 
@@ -58,7 +54,8 @@ def element_filter(selection_mode: str = "single"):
             "Elementos",
             options=elements,
             selection_mode=selection_mode,
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            default=elements[0]
         )
 
     return selection

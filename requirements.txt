@@ -32,3 +32,4 @@ pandas
 folium
 matplotlib
 plotly
+supabase

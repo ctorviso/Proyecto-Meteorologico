@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -42,6 +43,8 @@ def histograms(
         y_label: str = "Frecuencia",
         nbins: int = 20
 ) -> go.Figure:
+
+    df = df.dropna(subset=cols)
 
     fig = px.histogram(
         df,
@@ -99,8 +102,13 @@ def scatter_matrix(
         x_labels: list,
         y_labels: list,
         title: str,
-        color: str
+        color: str,
+        trendline: bool
 ) -> go.Figure:
+
+    df = df.copy()
+    df = df.sample(min(500, len(df)))
+    df = df.dropna(subset=x_cols + y_cols)
 
     fig = make_subplots(
         rows=len(y_cols),
@@ -115,6 +123,7 @@ def scatter_matrix(
         y_label = y_labels[i]
         for j, x_col in enumerate(x_cols):
             x_label = x_labels[j]
+
             fig.add_trace(
                 go.Scatter(
                     x=df[x_col],
@@ -122,8 +131,8 @@ def scatter_matrix(
                     mode='markers',
                     marker=dict(
                         color=color,
-                        size=6,
-                        opacity=0.7
+                        size=5,
+                        opacity=0.5
                     ),
                     name=f"{x_label} vs {y_label}"
                 ),
@@ -131,9 +140,16 @@ def scatter_matrix(
                 col=j + 1
             )
 
+            if trendline:
+                fig.add_trace(
+                    add_trendline(df, x_col, y_col),
+                    row = i + 1,
+                    col = j + 1
+                )
+
             if i == len(y_cols) - 1:
                 fig.update_xaxes(title_text=x_label, row=i + 1, col=j + 1)
-            if j == 0:  # First column
+            if j == 0:
                 fig.update_yaxes(title_text=y_label, row=i + 1, col=j + 1)
 
     fig.update_layout(
@@ -144,3 +160,61 @@ def scatter_matrix(
     )
 
     return fig
+
+
+import plotly.graph_objects as go
+
+
+def time_series(
+        df: pd.DataFrame,
+        title: str,
+        cols: list,
+        colors: list,
+        x_label: str = "Fecha",
+        y_label: str = "Valor",
+        opacity: float = 0.85
+) -> go.Figure:
+
+    fig = go.Figure()
+
+    for i, col in enumerate(cols):
+        fig.add_trace(
+            go.Scatter(
+                x=df['fecha'],  # assuming 'fecha' is the column with time series data
+                y=df[col],
+                mode='lines',  # draw lines
+                name=col,  # label in the legend
+                line=dict(color=colors[i]),  # custom line color
+                opacity=opacity  # custom line opacity
+            )
+        )
+
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        template="plotly_white",
+        title_x=0.5,
+        showlegend=True
+    )
+
+    return fig
+
+
+def add_trendline(df, x_col, y_col):
+
+    slope, intercept = np.polyfit(df[x_col], df[y_col], 1)
+    trendline = slope * df[x_col] + intercept
+
+    return go.Scatter(
+        x=df[x_col],
+        y=trendline,
+        mode='lines',
+        line=dict(
+            color='white',
+            width=2,
+            dash='dot'
+        ),
+        showlegend=False,
+        opacity=0.8
+    )

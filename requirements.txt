@@ -33,3 +33,5 @@ folium
 matplotlib
 plotly
 supabase
+psycopg2
+scikit-learn

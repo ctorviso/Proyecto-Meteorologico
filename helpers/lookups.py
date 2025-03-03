@@ -137,8 +137,8 @@ histogram_color_maps = {
 scatter_color_maps = {
     'temperatura': 'Orange',
     'lluvia': 'LightBlue',
-    'viento': 'Green',
+    'viento': 'LightGreen',
     'humedad': 'Cyan',
-    'presion': 'Purple',
+    'presion': 'Pink',
     'sol': 'Yellow'
 }

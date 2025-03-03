@@ -1,14 +1,6 @@
 import folium
 
 
-def spain_map():
-    m = folium.Map(
-        location=[36, -7],
-        zoom_start=5,
-        tiles=None
-    )
-    return m
-
 def get_column_choropleth(geojson, df, target_col: str, label: str, color: str):
     return folium.Choropleth(
         geo_data=geojson,

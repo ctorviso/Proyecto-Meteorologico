@@ -17,11 +17,11 @@ def check_latest():
 def main():
     pages = {
         "Principal": [
-            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="Welcome"),
-            st.Page("src/streamlit_app/Pages/Main/About.py", title="About"),
+            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="Bienvenidos"),
         ],
-        "EDA": [
-            st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="Análisis Exploratorio de Datos"),
+        "Análisis Exploratorio de Datos": [
+            st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="Gráficos"),
+            st.Page("src/streamlit_app/Pages/EDA/Mapa.py", title="Mapa"),
         ],
         "API": [
             st.Page("src/streamlit_app/Pages/API/API Docs.py", title="API Docs")

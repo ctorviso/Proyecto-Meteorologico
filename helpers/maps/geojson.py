@@ -25,6 +25,8 @@ def update_properties(data: dict) -> dict:
         loc_data = json.load(f)
 
     for key, value in loc_data.items():
+        if key == '0':
+            continue
         for feature in data[key]['features']:
             feature.setdefault('properties', {})
             feature['properties'].update(value)
@@ -50,6 +52,7 @@ geodata_provincias = {
 }
 
 
+# noinspection PydanticTypeChecker,PyTypeChecker,PyUnresolvedReferences
 def inject_col_values(df, cols):
     geodata = geodata_provincias.copy()
     for feature in geodata['features']:

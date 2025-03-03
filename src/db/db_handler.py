@@ -16,8 +16,6 @@ psycopg2.extensions.register_adapter(datetime.time, adapt_time)
 # noinspection PyMethodMayBeStatic
 class DBHandler:
 
-    elementos = ['lluvia', 'temperatura', 'viento', 'humedad']
-
     _instance = None
 
     def __new__(cls):
@@ -73,17 +71,21 @@ class DBHandler:
             result = connection.execute(table.insert(), records)
             self.logger.info(f"Rows affected: {result.rowcount}")
 
+    def all_tables(self):
+        inspector = inspect(self.engine)
+        return inspector.get_table_names()
+
     # In case of insertion mistakes, thanks to the extraction column we can easily revert back
     def delete_extracted_after_date(self, date_threshold):
         self.logger.info(f"Deleting data extracted after {date_threshold}...")
-        query = f"GET uuid FROM historico_meta WHERE extracted >= :date_threshold"
-        uuids = self.fetch(query, {"date_threshold": date_threshold})
-        # Delete from all tables
-        for elemento in self.elementos:
-            query = f"DELETE FROM {elemento}_historico WHERE uuid IN :uuids"
-            self.fetch(query, {"uuids": tuple(uuids)})
-        query = f"DELETE FROM historico_meta WHERE extracted >= :date_threshold"
-        self.fetch(query, {"date_threshold": date_threshold})
+
+        query = f"DELETE FROM historico WHERE extracted >= :date_threshold"
+        self.execute(query, {"date_threshold": date_threshold})
+
+        query = f"DELETE FROM historico_avg WHERE extracted >= :date_threshold"
+        self.execute(query, {"date_threshold": date_threshold})
+
+        self.logger.info("Data deleted.")
 
     def get_table(self, table_name: str):
         """Consulta de datos de una tabla en la base de datos"""
@@ -128,6 +130,15 @@ class DBHandler:
             connection.commit()
             self.logger.info(f"Query executed: {query}\nRows affected: {result.rowcount}")
 
+    def get_numeric_columns(self, table_name: str):
+        query = f"""
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_name = '{table_name}' 
+              AND data_type IN ('integer', 'bigint', 'smallint', 'numeric', 'real', 'double precision', 'decimal');
+            """
+        return self.fetch(query, {})
+
     def parse_string_or_list(self, input_param: Optional[Union[List[str], str]]) -> Optional[List[str]]:
         if input_param is None:
             return None
@@ -141,52 +152,136 @@ class DBHandler:
 
     def _format_query_historico(
             self,
+            base_query: str,
             avg: bool,
-            columns: Optional[List[str]] = None,
+            limit: Optional[int],
             ids: Optional[List[str]] = None,
             fecha_ini: Optional[str] = None,
             fecha_fin: Optional[str] = None
     ):
-        columns = ", ".join(columns) if columns else "*"
-        table_name = "historico_avg" if avg else "historico"
-        query = f"SELECT {columns} FROM {table_name}"
-        conditions = []
-
         id_col = 'provincia_id' if avg else 'idema'
+
+        conditions = []
+        params = {}
 
         if ids:
             conditions.append(f"{id_col} IN :ids")
-        if fecha_ini:
-            conditions.append("fecha >= :fecha_ini")
-        if fecha_fin:
-            conditions.append("fecha <= :fecha_fin")
-
-        if conditions:
-            query += " WHERE " + " AND ".join(conditions)
-
-        params = {}
-        if ids:
             params["ids"] = tuple(ids)
         if fecha_ini:
+            conditions.append("fecha >= :fecha_ini")
             params["fecha_ini"] = fecha_ini
         if fecha_fin:
+            conditions.append("fecha <= :fecha_fin")
             params["fecha_fin"] = fecha_fin
 
-        return query, params
+        if conditions:
+            base_query += " WHERE " + " AND ".join(conditions)
+
+        if limit:
+            base_query += f"""
+            ORDER BY RANDOM()
+            LIMIT :limit
+            """
+            params["limit"] = limit
+
+
+        return base_query, params
 
     def get_historico(
             self,
             columns: Optional[Union[List[str], str]] = None,
             idemas: Optional[Union[List[str], str]] = None,
             fecha_ini: Optional[str] = None,
-            fecha_fin: Optional[str] = None
+            fecha_fin: Optional[str] = None,
+            limit: Optional[int] = None
     ):
         idemas = self.parse_string_or_list(idemas)
         columns = self.parse_string_or_list(columns)
-        query, params = self._format_query_historico(False, columns, idemas, fecha_ini, fecha_fin)
+
+        columns = ", ".join(columns) if columns else "*"
+        base_query = f"SELECT {columns} FROM historico"
+
+        query, params = self._format_query_historico(base_query, False, limit, idemas, fecha_ini, fecha_fin)
         return self.fetch(query, params)
 
     def get_historico_average(
+            self,
+            columns: Optional[Union[List[str], str]] = None,
+            provincia_ids: Optional[Union[List[str], str]] = None,
+            fecha_ini: Optional[str] = None,
+            fecha_fin: Optional[str] = None,
+            limit: Optional[int] = None
+    ):
+        provincia_ids = self.parse_string_or_list(provincia_ids)
+        columns = self.parse_string_or_list(columns)
+
+        columns = ", ".join(columns) if columns else "*"
+        base_query = f"SELECT {columns} FROM historico_avg"
+
+        query, params = self._format_query_historico(base_query, True, limit, provincia_ids, fecha_ini, fecha_fin)
+        return self.fetch(query, params)
+
+    def get_yearly_average_provincias(
+            self,
+            year: int,
+            provincia_ids: Optional[Union[List[str], str]] = None,
+            columns: Optional[Union[List[str], str]] = None
+    ):
+        columns = self.parse_string_or_list(columns)
+        provincia_ids = self.parse_string_or_list(provincia_ids)
+
+        if not columns:
+            columns = [col['column_name'] for col in self.get_numeric_columns('historico_avg')]
+
+        avg_expressions = [f"AVG({col}) AS avg_{col}" for col in columns]
+        avg_cols = ", ".join(avg_expressions)
+
+        query = f"""
+        SELECT provincia_id, {avg_cols}
+        FROM historico_avg
+        """
+
+        conditions = []
+        if provincia_ids:
+            conditions.append(f"provincia_id IN :provincia_ids")
+
+        conditions.append(f"EXTRACT(YEAR FROM fecha) = {year}")
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+
+        query += " GROUP BY provincia_id"
+
+        params = {"provincia_ids": tuple(provincia_ids)} if provincia_ids else {}
+
+        return self.fetch(query, params)
+
+    def get_yearly_average_spain(
+            self,
+            year: int,
+            columns: Optional[Union[List[str], str]] = None
+    ):
+        columns = self.parse_string_or_list(columns)
+        if not columns:
+            columns = [col['column_name'] for col in self.get_numeric_columns('historico_avg')]
+
+        avg_expressions = [f"AVG({col}) AS {col}" for col in columns]
+
+        avg_cols = ", ".join(avg_expressions)
+
+        query = f"""
+        SELECT {avg_cols}
+        FROM historico_avg
+        """
+
+        conditions = [f"EXTRACT(YEAR FROM fecha) = {year}"]
+
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+
+        return self.fetch(query, {})
+
+    def get_daily_average(
             self,
             columns: Optional[Union[List[str], str]] = None,
             provincia_ids: Optional[Union[List[str], str]] = None,
@@ -195,8 +290,18 @@ class DBHandler:
     ):
         provincia_ids = self.parse_string_or_list(provincia_ids)
         columns = self.parse_string_or_list(columns)
-        query, params = self._format_query_historico(True, columns, provincia_ids, fecha_ini, fecha_fin)
+
+        if not columns:
+            columns = [col['column_name'] for col in self.get_numeric_columns('historico_avg')]
+
+        avg_cols = [f"AVG({col}) AS {col}" for col in columns]
+        base_query = f"SELECT fecha, {', '.join(avg_cols)} FROM historico_avg"
+
+        query, params = self._format_query_historico(base_query, True, None, provincia_ids, fecha_ini, fecha_fin)
+
+        query += " GROUP BY fecha"
         return self.fetch(query, params)
+
 
     def is_empty(self, table_name: str):
         query = text(f"SELECT * FROM {table_name} LIMIT 1")

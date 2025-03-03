@@ -1,31 +1,10 @@
 from datetime import datetime, timedelta
 import streamlit as st
-from helpers.lookups import com_names, comunidad_lookup, provincias, provincia_lookup, estacion_lookup, \
-    estaciones, elements
 from helpers import api
+from helpers.lookups import elements
 
 
-def estacion_filter():
-    comunidad = st.selectbox("Selecciona la comunidad autónoma", com_names)
-    com_id = comunidad_lookup[comunidad]
-    st.session_state.com_id = com_id
-
-    prov_names = [provincias[index]["nombre"] for index in provincias if
-                  str(provincias[index]["com_auto_id"]) == com_id]
-    provincia = st.selectbox("Selecciona la provincia", prov_names)
-    prov_id = provincia_lookup[provincia]
-    st.session_state.prov_id = prov_id
-
-    est_names = [estaciones[index]["nombre"] for index in estaciones if
-                 str(estaciones[index]["provincia_id"]) == prov_id]
-    estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
-    idema = estacion_lookup[estacion]
-    st.session_state.idema = idema
-
-    return com_id, prov_id, idema
-
-
-def date_range_filter():
+def date_range_filter(page: str):
 
     earliest = api.get_earliest_historical_date()
     latest = api.get_latest_historical_date()
@@ -39,9 +18,8 @@ def date_range_filter():
     earliest = earliest.strftime("%Y-%m-%d")
     latest = latest.strftime("%Y-%m-%d")
 
-    fecha_ini = str(st.date_input(label="Fecha inicio", value=default_ini, min_value=earliest, max_value=latest))
-
-    fecha_fin = str(st.date_input(label="Fecha fin", value=default_fin, min_value=fecha_ini, max_value=latest))
+    fecha_ini = str(st.date_input(label="Fecha inicio", value=default_ini, min_value=earliest, max_value=latest, key=f"fecha_ini_{page}"))
+    fecha_fin = str(st.date_input(label="Fecha fin", value=default_fin, min_value=fecha_ini, max_value=latest, key=f"fecha_fin_{page}"))
 
     return fecha_ini, fecha_fin
 

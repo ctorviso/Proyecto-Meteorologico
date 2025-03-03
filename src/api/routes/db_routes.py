@@ -66,12 +66,19 @@ fecha_fin_query = Query(None,
     alias="fecha_fin"
 )
 
+limit_query = Query(None,
+    title="Limit",
+    description="Número de registros a mostrar (seleccionados al azar). Por defecto no hay límite pero se recomienda usarlo para evitar sobrecargar el servidor.",
+    alias="limit"
+)
+
 @router.get("/historico")
 def get_historico(
         elementos: Optional[str] = elementos_query,
         idemas: Optional[str] = idemas_query,
         fecha_ini: Optional[str] = fecha_ini_query,
-        fecha_fin: Optional[str] = fecha_fin_query
+        fecha_fin: Optional[str] = fecha_fin_query,
+        limit: Optional[int] = limit_query
 ):
     all_cols = [] if elementos else None
     if elementos:
@@ -85,14 +92,15 @@ def get_historico(
 
     fecha_ini, fecha_fin = truncate_date_range(fecha_ini, fecha_fin)
 
-    return db.get_historico(all_cols, idemas, fecha_ini, fecha_fin)
+    return db.get_historico(all_cols, idemas, fecha_ini, fecha_fin, limit)
 
 @router.get("/historico_average")
 def get_historico_average(
         elementos: Optional[str] = elementos_query,
         provincia_ids: Optional[str] = provincia_ids_query,
         fecha_ini: Optional[str] = fecha_ini_query,
-        fecha_fin: Optional[str] = fecha_fin_query
+        fecha_fin: Optional[str] = fecha_fin_query,
+        limit: Optional[int] = limit_query
 ):
     all_cols = [] if elementos else None
     if elementos:
@@ -104,9 +112,7 @@ def get_historico_average(
     fecha_ini = fecha_ini.strip() if fecha_ini else None
     fecha_fin = fecha_fin.strip() if fecha_fin else None
 
-    fecha_ini, fecha_fin = truncate_date_range(fecha_ini, fecha_fin)
-
-    return db.get_historico_average(all_cols, provincia_ids, fecha_ini, fecha_fin)
+    return db.get_historico_average(all_cols, provincia_ids, fecha_ini, fecha_fin, limit)
 
 
 @router.get("/historico/date/earliest")
@@ -128,3 +134,54 @@ async def fetch_latest_historical(request: Request):
 @router.get("/historico/latest-fetch")
 def get_latest_fetch():
     return db.get_latest_fetch()
+
+@router.get("/historico/yearly/provincias")
+def get_yearly_average_provincias(
+        year: int,
+        elementos: Optional[str] = elementos_query,
+        provincia_ids: Optional[str] = provincia_ids_query
+):
+    all_cols = [] if elementos else None
+    if elementos:
+        for element in elementos.lower().split(","):
+            all_cols.extend(element_cols_map_numeric[element.strip()])
+
+    provincia_ids = provincia_ids.replace(" ", "") if provincia_ids else None
+
+    return db.get_yearly_average_provincias(year, provincia_ids, all_cols)
+
+@router.get("/historico/yearly/spain")
+def get_yearly_average(
+        year: int,
+        elementos: Optional[str] = elementos_query
+):
+    all_cols = [] if elementos else None
+    if elementos:
+        for element in elementos.lower().split(","):
+            all_cols.extend(element_cols_map_numeric[element.strip()])
+
+    return db.get_yearly_average_spain(year, all_cols)
+
+@router.get("/historico/daily")
+def get_daily_average(
+        elementos: Optional[str] = elementos_query,
+        provincia_ids: Optional[str] = provincia_ids_query,
+        fecha_ini: Optional[str] = fecha_ini_query,
+        fecha_fin: Optional[str] = fecha_fin_query
+):
+    all_cols = [] if elementos else None
+    if elementos:
+        for element in elementos.lower().split(","):
+            all_cols.extend(element_cols_map_numeric[element.strip()])
+
+    provincia_ids = provincia_ids.replace(" ", "") if provincia_ids else None
+    fecha_ini = fecha_ini.strip() if fecha_ini else None
+    fecha_fin = fecha_fin.strip() if fecha_fin else None
+
+    return db.get_daily_average(all_cols, provincia_ids, fecha_ini, fecha_fin)
+
+@router.get("/tables")
+def all_tables():
+    response = db.all_tables()
+    response.sort()
+    return response

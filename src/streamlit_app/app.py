@@ -18,14 +18,14 @@ def main():
     pages = {
         "Principal": [
             st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="Welcome"),
-            st.Page("src/streamlit_app/Pages/Main/API Docs.py", title="API Docs")
-        ],
-        "Histórico": [
-            st.Page("src/streamlit_app/Pages/Historical/Estacion.py", title="Estación"),
+            st.Page("src/streamlit_app/Pages/Main/About.py", title="About"),
         ],
         "EDA": [
             st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="Análisis Exploratorio de Datos"),
         ],
+        "API": [
+            st.Page("src/streamlit_app/Pages/API/API Docs.py", title="API Docs")
+        ]
     }
 
     check_latest()

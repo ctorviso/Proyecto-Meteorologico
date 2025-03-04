@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from tensorflow.python.data.ops.optional_ops import Optional
 
 
 def histogram(
@@ -218,3 +219,37 @@ def add_trendline(df, x_col, y_col):
         showlegend=False,
         opacity=0.8
     )
+
+def bar_plots(
+        sorted_data: pd.DataFrame,
+        title: str,
+        cols: list,
+        x_label: str,
+        y_label: str,
+        label_maps: dict,
+        colors: list
+):
+
+    fig = px.bar(
+        sorted_data,
+        x=sorted_data.index,
+        y=cols,
+        title=title,
+        labels={'x': x_label, 'y': y_label},
+        barmode='group'
+    )
+
+    for i, trace in enumerate(fig.data):
+        col_name = trace.name
+        if col_name in label_maps:
+            trace.name = label_maps[col_name]
+        trace.marker.color = colors[i]
+
+    fig.update_layout(
+        xaxis_tickangle=-45,
+        title_x=0.5,
+        xaxis_title=x_label,
+        yaxis_title=y_label
+    )
+
+    return fig

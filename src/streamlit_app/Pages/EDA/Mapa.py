@@ -1,13 +1,16 @@
 import folium
 import pandas as pd
 import streamlit as st
+from sklearn.preprocessing import MinMaxScaler
 from streamlit_folium import folium_static
 from helpers import api
-from helpers.lookups import element_cols_map_numeric, label_maps, choropleth_color_maps
+from helpers.lookups import element_cols_map_numeric, label_maps, choropleth_color_maps, provincias, \
+    histogram_color_maps
 from helpers.lookups import numeric_cols
 from helpers.maps.folium import create_tooltip, get_column_choropleth
 from helpers.maps.geojson import inject_col_values
 from helpers.preprocessing import convert_numeric
+from helpers.visualization import bar_plots
 from src.streamlit_app.components.filters import date_range_filter
 from src.streamlit_app.components.tabs import element_tabs
 
@@ -67,6 +70,32 @@ def show_choropleth_map(df):
 
         folium_static(maps[selected_map], width=900, height=550)
 
+def show_histogram_provincias():
+
+    cols = element_cols_map_numeric[selected_element]
+
+    avg_provincia = avg_df.copy()
+    avg_provincia['provincia'] = avg_provincia['provincia_id'].apply(lambda x: provincias[x]['nombre'])
+
+    sorted_data = avg_provincia.groupby('provincia')[cols].mean().sort_values(by=cols[0])
+
+    if st.checkbox("MinMax", key=f"{selected_element}_minmax"):
+        scaler = MinMaxScaler()
+        sorted_data[cols] = scaler.fit_transform(sorted_data[cols])
+
+    fig = bar_plots(
+        sorted_data,
+        title=f"{selected_element.capitalize()} por Provincia",
+        cols=cols,
+        x_label="Provincia",
+        y_label="Valor promedio",
+        label_maps=label_maps,
+        colors=[histogram_color_maps[col] for col in cols]
+    )
+
+
+    st.plotly_chart(fig, use_container_width=True)
+
 data = None
 
 with st.sidebar:
@@ -95,3 +124,4 @@ else:
     avg_df = convert_numeric(avg_df, numeric_cols)
 
     show_choropleth_map(avg_df)
+    show_histogram_provincias()

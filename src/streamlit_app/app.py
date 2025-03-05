@@ -18,6 +18,7 @@ def main():
     pages = {
         "Principal": [
             st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="Bienvenidos"),
+            st.Page("src/streamlit_app/Pages/Main/About_us.py", title="Sobre nosotras"),
         ],
         "Análisis Exploratorio de Datos": [
             st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="Gráficos"),

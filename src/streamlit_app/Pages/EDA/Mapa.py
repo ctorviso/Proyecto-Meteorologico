@@ -17,7 +17,7 @@ from src.streamlit_app.components.tabs import element_tabs
 if "first_run" not in st.session_state:
     st.session_state.first_run = True
 
-st.title("Mapa Choroplético")
+st.title("Mapa Coroplético :world_map:")
 
 element_tabs()
 selected_element = st.session_state.selected_element

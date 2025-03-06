@@ -16,7 +16,7 @@ files = [
      "url": f"{BASE_URL}/validation_scaled.csv"},
 ]
 
-st.title("Datasets para los modelos de Machine Learning 📊")
+st.title("📊 Datasets para los modelos de Machine Learning")
 st.markdown("En esta sección puedes descargar los datasets que se utilizaron para entrenar los modelos de Machine Learning.")
 
 tab1, tab2 = st.tabs(["Navegador de Archivos", "Visualización de datos"])

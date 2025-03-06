@@ -5,7 +5,9 @@ from helpers.config import api_url
 docs_url = f'{api_url}/docs'
 swagger_url = f'{api_url}/openapi.json'
 
-st.link_button('Documentación API', docs_url)
+st.title('📜 Documentación API')
+
+st.markdown("---")
 
 swagger_html = f"""
 <html>

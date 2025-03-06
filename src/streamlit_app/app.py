@@ -17,19 +17,20 @@ def check_latest():
 def main():
     pages = {
         "Principal": [
-            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="Bienvenidos"),
-            st.Page("src/streamlit_app/Pages/Main/About_us.py", title="Sobre nosotras"),
+            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Bienvenidos"),
+            st.Page("src/streamlit_app/Pages/Main/About_us.py", title="👩‍💻 Sobre nosotras"),
         ],
         "Análisis Exploratorio de Datos": [
-            st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="Gráficos"),
-            st.Page("src/streamlit_app/Pages/EDA/Mapa.py", title="Mapa"),
-        ],
-        "API": [
-            st.Page("src/streamlit_app/Pages/API/API Docs.py", title="API Docs")
+            st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="📈 Gráficos"),
+            st.Page("src/streamlit_app/Pages/EDA/Mapa.py", title="🗺️ Mapa"),
         ],
         "Datos": [
-            st.Page("src/streamlit_app/Pages/Datasets/ML.py", title="ML Datasets"),
+            st.Page("src/streamlit_app/Pages/Datasets/Historico.py", title="📚 Datos Históricos"),
+            st.Page("src/streamlit_app/Pages/Datasets/ML.py", title="📊 Datos ML"),
         ],
+        "API": [
+            st.Page("src/streamlit_app/Pages/API/API Docs.py", title="📜 API Docs")
+        ]
     }
 
     check_latest()

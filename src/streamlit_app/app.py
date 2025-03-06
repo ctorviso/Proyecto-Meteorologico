@@ -26,7 +26,10 @@ def main():
         ],
         "API": [
             st.Page("src/streamlit_app/Pages/API/API Docs.py", title="API Docs")
-        ]
+        ],
+        "Datos": [
+            st.Page("src/streamlit_app/Pages/Datasets/ML.py", title="ML Datasets"),
+        ],
     }
 
     check_latest()

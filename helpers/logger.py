@@ -38,8 +38,13 @@ def setup_logger(log_file: str, class_name: Optional[str] = None) -> logging.Log
     logger.propagate = False
 
     if not logger.handlers:
-        # Create a rotating file handler
-        file_handler = RotatingFileHandler(f'logs/{log_file}.log', maxBytes=10000000, backupCount=3)
+
+        if os.getenv('TEST_ENV'):
+            filename = f'logs/{log_file}.log.test'
+        else:
+            filename = f'logs/{log_file}.log'
+
+        file_handler = RotatingFileHandler(filename, maxBytes=10000000, backupCount=3)
         file_handler.setLevel(logging.DEBUG)
 
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(funcName)s - %(message)s')

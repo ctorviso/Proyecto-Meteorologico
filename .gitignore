@@ -11,3 +11,4 @@ logs/
 .toml
 .coverage
 data/historical
+.lct

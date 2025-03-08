@@ -116,22 +116,22 @@ with st.sidebar:
         st.session_state.first_run = False
 
         with st.spinner("Cargando datos..."):
-            st.session_state.data = api.get_historico_average(
+            st.session_state.graficos_data = api.get_historico_average(
                 provincia_ids=[prov_id] if prov_id else None,
                 fecha_ini=fecha_inicial,
                 fecha_fin=fecha_final
             )
 
-if 'data' not in st.session_state:
+if 'graficos_data' not in st.session_state:
     st.header("Aplique los filtros para cargar los datos.")
     st.stop()
 
-data = st.session_state.data
+data = st.session_state.graficos_data
 
 if len(data) == 0:
     st.error("No hay datos disponibles para el rango seleccionado.")
 else:
-    avg_df = pd.DataFrame(data).drop(columns=["extracted"])
+    avg_df = pd.DataFrame(data).drop(columns=['extracted'])
     avg_df['provincia_id'] = avg_df['provincia_id'].astype(str)
     avg_df = convert_numeric(avg_df, numeric_cols)
     avg_df = avg_df[avg_df['provincia_id'] == prov_id] if prov_id != "0" else avg_df

@@ -14,17 +14,19 @@ from helpers.visualization import bar_plots
 from src.streamlit_app.components.filters import date_range_filter
 from src.streamlit_app.components.tabs import element_tabs
 
-if "first_run" not in st.session_state:
-    st.session_state.first_run = True
+if "mapa_first_run" not in st.session_state:
+    st.session_state.mapa_first_run = True
 
 st.title("Mapa Coroplético :world_map:")
 
 element_tabs()
 selected_element = st.session_state.selected_element
 
-def show_choropleth_map(df):
+def show_choropleth_map():
 
-    if st.session_state.selected_element and 'data' in st.session_state:
+    df = get_avg_df()
+
+    if st.session_state.selected_element and 'mapa_data' in st.session_state:
 
         geojson = inject_col_values(df, element_cols_map_numeric[selected_element])
 
@@ -74,7 +76,7 @@ def show_histogram_provincias():
 
     cols = element_cols_map_numeric[selected_element]
 
-    avg_provincia = avg_df.copy()
+    avg_provincia = get_avg_df()
     avg_provincia['provincia'] = avg_provincia['provincia_id'].apply(lambda x: provincias[x]['nombre'])
 
     sorted_data = avg_provincia.groupby('provincia')[cols].mean().sort_values(by=cols[0])
@@ -101,27 +103,31 @@ data = None
 with st.sidebar:
     fecha_inicial, fecha_final = date_range_filter('mapa')
 
-    if st.button("Aplicar") or st.session_state.first_run:
-        st.session_state.first_run = False
+    if st.button("Aplicar") or st.session_state.mapa_first_run:
+        st.session_state.mapa_first_run = False
 
         with st.spinner("Cargando datos..."):
-            st.session_state.data = api.get_historico_average(
+            st.session_state.mapa_data = api.get_historico_average(
                 fecha_ini=fecha_inicial,
                 fecha_fin=fecha_final
             )
+        st.rerun()
 
-if 'data' not in st.session_state:
+if 'mapa_data' not in st.session_state:
     st.header("Aplique los filtros para cargar los datos.")
     st.stop()
 
-data = st.session_state.data
+def get_avg_df():
 
-if len(data) == 0:
-    st.error("No hay datos disponibles para el rango seleccionado.")
-else:
-    avg_df = pd.DataFrame(data).drop(columns=["extracted"])
-    avg_df['provincia_id'] = avg_df['provincia_id'].astype(str)
-    avg_df = convert_numeric(avg_df, numeric_cols)
+    if len(st.session_state.mapa_data) == 0:
+        st.error("No hay datos disponibles para el rango seleccionado.")
+        return None
+    else:
+        _avg_df = pd.DataFrame(st.session_state.mapa_data).drop(columns=["extracted"])
+        _avg_df['provincia_id'] = _avg_df['provincia_id'].astype(str)
+        _avg_df = convert_numeric(_avg_df, numeric_cols)
 
-    show_choropleth_map(avg_df)
-    show_histogram_provincias()
+        return _avg_df
+
+show_choropleth_map()
+show_histogram_provincias()

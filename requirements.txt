@@ -39,4 +39,3 @@ joblib
 folium
 matplotlib
 plotly
-psycopg2

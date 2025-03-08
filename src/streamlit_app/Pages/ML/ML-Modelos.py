@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 import requests
 import streamlit as st
-from tensorflow.python.keras.models import load_model
+from keras.api.models import load_model
 from helpers import api
 from helpers.config import script_dir
 from helpers.lookups import prov_names, provincia_lookup, estacion_lookup, estaciones

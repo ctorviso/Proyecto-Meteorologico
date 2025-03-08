@@ -1,18 +1,9 @@
-from datetime import datetime, timedelta, timezone
 import streamlit as st
-from helpers import api
+from src.streamlit_app.background import check_latest
 
 st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:", layout="wide",
                    initial_sidebar_state="expanded")
 
-def check_latest():
-    res = api.get_latest_fetch()
-    if res:
-        fetched_time = datetime.fromisoformat(res['fetched'])
-        if datetime.now(timezone.utc) - fetched_time > timedelta(hours=1):
-            with st.spinner("Fetching latest data..."):
-                api.fetch_latest()
-            st.rerun()
 
 def main():
     pages = {
@@ -24,9 +15,13 @@ def main():
             st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="📈 Gráficos"),
             st.Page("src/streamlit_app/Pages/EDA/Mapa.py", title="🗺️ Mapa"),
         ],
+        "Machine Learning": [
+            st.Page("src/streamlit_app/Pages/ML/ML-Intro.py", title="🤖 Introducción"),
+            st.Page("src/streamlit_app/Pages/ML/ML-Modelos.py", title="🧠 Modelos"),
+        ],
         "Datos": [
-            st.Page("src/streamlit_app/Pages/Datasets/Historico.py", title="📚 Datos Históricos"),
-            st.Page("src/streamlit_app/Pages/Datasets/ML.py", title="📊 Datos ML"),
+            st.Page("src/streamlit_app/Pages/Datasets/Datasets-Historico.py", title="📚 Datos Históricos"),
+            st.Page("src/streamlit_app/Pages/Datasets/Datasets-ML.py", title="📊 Datos ML"),
         ],
         "API": [
             st.Page("src/streamlit_app/Pages/API/API Docs.py", title="📜 API Docs")

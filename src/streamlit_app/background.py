@@ -18,10 +18,6 @@ def last_check_time() -> datetime:
         return datetime.fromisoformat(f.read())
 
 def update_last_check_time():
-    if not os.path.exists(lct_path):
-        with open(lct_path, 'w') as f:
-            f.write(datetime.now(timezone.utc).isoformat())
-        return
     with open(lct_path, 'w') as f:
         f.write(datetime.now(timezone.utc).isoformat())
 

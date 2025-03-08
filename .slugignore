@@ -1,6 +1,6 @@
 notebooks/
 ml/
-data/
+data/geojson/
 .streamlit/
 requirements.txt
 markdown/

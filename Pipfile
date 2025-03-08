@@ -1,0 +1,37 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+# General
+python-dotenv = "*"
+setuptools = "*"
+toml = "*"
+
+# FastAPI
+fastapi = "*"
+uvicorn = "*"
+pydantic = "*"
+
+# HTTP
+requests = "*"
+aiohttp = "*"
+
+# Database
+sqlalchemy = "*"
+psycopg2-binary = "*"
+supabase = "*"
+
+# Data manipulation
+numpy = "==2.0.2"
+pandas = "*"
+
+[dev-packages]
+# Testing
+pytest = "*"
+pytest-cov = "*"
+pytest-asyncio = "*"
+
+[requires]
+python_version = "3.11"

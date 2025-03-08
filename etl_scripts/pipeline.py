@@ -62,7 +62,8 @@ async def run_etl(start_date: date, end_date: date):
             return message, False
 
     data = await extract_historical_data(start_date, end_date)
-    if len(data) == 0:
+
+    if data is None or len(data) == 0:
         message = "No data was extracted."
         logger.warning(message)
         return message, False

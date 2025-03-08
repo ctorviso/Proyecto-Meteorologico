@@ -126,7 +126,7 @@ def get_latest_historical_date():
 async def fetch_latest_historical(background_tasks: BackgroundTasks):
     if not get_env_var("AEMET_API_KEY") and not get_env_var("AEMET_API_KEY_1"):
         return {'message': 'No AEMET API Key is present.'}
-    background_tasks: background_tasks.add_task(run_etl_latest, origin='api')
+    background_tasks.add_task(run_etl_latest, origin='api')
     return {'message': 'ETL pipeline started in the background.'}
 
 @router.get("/historico/latest-fetch")

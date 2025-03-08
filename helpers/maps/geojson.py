@@ -51,15 +51,13 @@ geodata_provincias = {
     "features": combine_features()
 }
 
+def inject_col_values(geojson, df, cols):
 
-# noinspection PydanticTypeChecker,PyTypeChecker,PyUnresolvedReferences
-def inject_col_values(df, cols):
-    geodata = geodata_provincias.copy()
-    for feature in geodata['features']:
+    for feature in geojson['features']:
         provincia_id = feature['properties']['provincia_id']
         matching_rows = df[df['provincia_id'] == provincia_id]
+        if matching_rows.empty:
+            continue
         row = matching_rows.iloc[0]
         for col in cols:
             feature['properties'][col] = row[col]
-
-    return geodata

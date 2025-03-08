@@ -38,7 +38,7 @@ async def extract_historical_data(
                     all_data.extend(data)
                     logger.info(f"Retrieved data for date range {start_date} to {current_end_date}")
                 else:
-                    raise ValueError("Data is None")
+                    return None
 
                 current_start_date += timedelta(days=15)  # Max batches of 15 days
                 await asyncio.sleep(delay)

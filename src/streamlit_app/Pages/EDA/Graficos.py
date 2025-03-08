@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
@@ -6,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler
 from helpers import api
 from helpers.lookups import element_cols_map_numeric, label_maps, histogram_color_maps, numeric_cols, scatter_cols, \
     scatter_color_maps, provincia_lookup, prov_names
-from helpers.preprocessing import convert_numeric
+from helpers.preprocessing import convert_numeric, log_transform_df
 from helpers.visualization import histograms, scatter_matrix, time_series
 from src.streamlit_app.components.filters import date_range_filter
 from src.streamlit_app.components.tabs import element_tabs
@@ -137,6 +136,6 @@ else:
     avg_df = avg_df[avg_df['provincia_id'] == prov_id] if prov_id != "0" else avg_df
 
     avg_df_log = avg_df.copy(deep=True)
-    avg_df_log[numeric_cols] = avg_df_log[numeric_cols].apply(lambda x: x.apply(lambda y: y if y == 0 else np.log(y)))
+    avg_df_log = log_transform_df(avg_df_log, numeric_cols)
 
     show_graphs()

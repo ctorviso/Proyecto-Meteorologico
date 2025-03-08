@@ -326,3 +326,25 @@ def provincia_avg(df, element: str):
         'provincia': 'first',  # Retain the first (or last) 'nombre provincia' per group
         **{col: 'mean' for col in df.select_dtypes(include=['number']).columns if col != 'provincia_id'}
     }).reset_index()
+
+
+def log_transform_df(df, numeric_cols: Optional[list[str]] = None, epsilon=1e-10):
+
+    df_log = df.copy()
+
+    if not numeric_cols:
+        numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+
+    if not numeric_cols:
+        return df_log
+
+    min_value = df_log[numeric_cols].min().min()
+
+    shift_value = abs(min_value) + epsilon if min_value <= 0 else 0
+    df_log[numeric_cols] = df_log[numeric_cols].apply(lambda x: x + shift_value)
+
+    df_log[numeric_cols] = df_log[numeric_cols].apply(np.log)
+
+    df_log = df_log.round(4)
+
+    return df_log

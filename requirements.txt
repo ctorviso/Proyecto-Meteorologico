@@ -6,6 +6,7 @@ toml
 # Testing
 pytest
 pytest-cov
+pytest-asyncio
 
 # FastAPI
 fastapi
@@ -23,14 +24,19 @@ aiohttp
 # Database
 sqlalchemy
 psycopg2-binary
+supabase
 
 # Data manipulation
 numpy
 pandas
 
+# Machine Learning
+keras
+scikit-learn
+joblib
+
 # Data Visualization
 folium
 matplotlib
 plotly
-supabase
-scikit-learn
+psycopg2

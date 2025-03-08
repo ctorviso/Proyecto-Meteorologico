@@ -76,7 +76,7 @@ prophet.markdown("""---""")
 prophet.markdown(
     """
     ### Análisis de Residuos
-    En la siguiente imagen se muestra un análisis de comparación entre los valores reales y los valores predichos por el modelo GRU:
+    En la siguiente imagen se muestra un análisis de comparación entre los valores reales y los valores predichos por el modelo Prophet:
     """
 )
 

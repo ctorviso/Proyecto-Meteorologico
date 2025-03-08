@@ -4,7 +4,6 @@ from fastapi import APIRouter, Query, BackgroundTasks
 from etl_scripts.pipeline import run_etl_latest
 from helpers.config import get_env_var
 from helpers.lookups import elements, element_cols_map_numeric
-from helpers.preprocessing import truncate_date_range
 from src.db.db_handler import DBHandler
 
 db = DBHandler()
@@ -90,8 +89,6 @@ def get_historico(
     idema = idema.replace(" ", "") if idema else None
     fecha_ini = fecha_ini.strip() if fecha_ini else None
     fecha_fin = fecha_fin.strip() if fecha_fin else None
-
-    fecha_ini, fecha_fin = truncate_date_range(fecha_ini, fecha_fin)
 
     return db.get_historico(columns, idema, fecha_ini, fecha_fin, limit)
 

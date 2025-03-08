@@ -1,7 +1,6 @@
 from typing import List, Optional
-
 from helpers.config import api_url
-from helpers.http_request import get
+from helpers.http_request import get, post
 
 table_url = api_url + "/db/{table}"
 historico_url = api_url + "/db/historico"
@@ -18,19 +17,20 @@ def get_table(table: str):
     return get(table_url['table'].format(table=table))[0]
 
 def get_historico(
-        elementos: Optional[List[str]] = None,
+        columns: Optional[List[str]] = None,
         idemas: Optional[List[str]] = None,
         fecha_ini: Optional[str] = None,
         fecha_fin: Optional[str] = None,
         limit: Optional[int] = None
 ):
     params = {
-        'elementos': ",".join(elementos) if elementos else None,
-        'idemas': ",".join(idemas) if idemas else None,
+        'columns': ",".join(columns) if columns else None,
+        'idema': ",".join(idemas) if idemas else None,
         'fecha_ini': fecha_ini,
         'fecha_fin': fecha_fin,
         'limit': limit
     }
+    print(params)
     return get(url=historico_url, params=params)[0]
 
 def get_historico_average(
@@ -95,4 +95,4 @@ def get_latest_fetch():
     return get(url=latest_fetch_url)[0][0]
 
 def fetch_latest():
-    return get(url=fetch_latest_url)[0]
+    return post(url=fetch_latest_url)[0]

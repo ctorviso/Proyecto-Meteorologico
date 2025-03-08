@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, BackgroundTasks
 from etl_scripts.pipeline import run_etl_latest
 from helpers.config import get_env_var
-from helpers.lookups import element_cols_map, elements, element_cols_map_numeric
+from helpers.lookups import elements, element_cols_map_numeric
 from helpers.preprocessing import truncate_date_range
 from src.db.db_handler import DBHandler
 
@@ -37,6 +37,12 @@ elementos_query = Query(None,
     title="Elementos",
     description=f"""Elementos a mostrar separados por coma.\nValores posibles: {', '.join(elements)}""",
     alias="elementos"
+)
+
+columns_query = Query(None,
+    title="Columnas",
+    description="Columnas a mostrar separadas por coma. eg. idema, fecha, tmed",
+    alias="columns"
 )
 
 idemas_query = Query(None,
@@ -74,25 +80,20 @@ limit_query = Query(None,
 
 @router.get("/historico")
 def get_historico(
-        elementos: Optional[str] = elementos_query,
-        idemas: Optional[str] = idemas_query,
+        columns: Optional[str] = columns_query,
+        idema: Optional[str] = idemas_query,
         fecha_ini: Optional[str] = fecha_ini_query,
         fecha_fin: Optional[str] = fecha_fin_query,
         limit: Optional[int] = limit_query
 ):
-    all_cols = [] if elementos else None
-    if elementos:
-        for element in elementos.lower().split(","):
-            all_cols.extend(element_cols_map[element.strip()])
-        all_cols += ["idema", "fecha"]
 
-    idemas = idemas.replace(" ", "") if idemas else None
+    idema = idema.replace(" ", "") if idema else None
     fecha_ini = fecha_ini.strip() if fecha_ini else None
     fecha_fin = fecha_fin.strip() if fecha_fin else None
 
     fecha_ini, fecha_fin = truncate_date_range(fecha_ini, fecha_fin)
 
-    return db.get_historico(all_cols, idemas, fecha_ini, fecha_fin, limit)
+    return db.get_historico(columns, idema, fecha_ini, fecha_fin, limit)
 
 @router.get("/historico_average")
 def get_historico_average(
@@ -124,12 +125,12 @@ def get_latest_historical_date():
     return db.get_latest_historical_date()
 
 
-@router.get("/historico/fetch-latest")
-async def fetch_latest_historical(request: Request):
+@router.post("/historico/fetch-latest")
+async def fetch_latest_historical(background_tasks: BackgroundTasks):
     if not get_env_var("AEMET_API_KEY") and not get_env_var("AEMET_API_KEY_1"):
         return {'message': 'No AEMET API Key is present.'}
-    response = await run_etl_latest(request.client.host)
-    return {'message': response}
+    background_tasks: background_tasks.add_task(run_etl_latest, origin='api')
+    return {'message': 'ETL pipeline started in the background.'}
 
 @router.get("/historico/latest-fetch")
 def get_latest_fetch():

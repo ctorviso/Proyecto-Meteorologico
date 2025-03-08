@@ -1,3 +1,4 @@
+import asyncio
 from time import sleep
 import aiohttp
 import requests
@@ -14,11 +15,17 @@ class RetryableError(Exception):
         self.status_code = status_code
 
 
-def get(url: str, max_retries=3, **kwargs):
+def _make_request(method: str, url: str, max_retries: int =3, **kwargs):
     latest_error = None
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, **kwargs)
+            if method.lower() == 'get':
+                response = requests.get(url, **kwargs)
+            elif method.lower() == 'post':
+                response = requests.post(url, **kwargs)
+            else:
+                raise ValueError(f"Method {method} not supported")
+
             if response.status_code in retryable_errors:
                 raise RetryableError(response.status_code)
             response.raise_for_status()
@@ -33,14 +40,53 @@ def get(url: str, max_retries=3, **kwargs):
     logger.error(f"Failed GET request to {url} after {max_retries} attempts")
     return None, latest_error
 
+def get(url: str, max_retries=3, **kwargs):
+    return _make_request('get', url, max_retries, **kwargs)
 
-async def get_async(session: aiohttp.ClientSession, url: str, **kwargs):
-    async with session.get(url, **kwargs) as response:
-        response.raise_for_status()
-        content_type = response.headers.get("Content-Type", "").lower()
-        if content_type.startswith("application/json"):
-            data = await response.json()
-        else:
-            data = await response.text()
+def post(url: str, max_retries=3, **kwargs):
+    return _make_request('post', url, max_retries, **kwargs)
 
-        return data, response.status
+async def get_async(
+        session: aiohttp.ClientSession,
+        url: str,
+        max_retries: int = 3,
+        delay: int = 2,
+        **kwargs
+):
+
+    for attempt in range(max_retries + 1):
+
+        if attempt == max_retries:
+            raise ValueError("Max retries reached.")
+
+        logger.info(f"Attempt {attempt + 1}/{max_retries}")
+
+        try:
+
+            async with session.get(url, **kwargs) as response:
+
+                response.raise_for_status()
+                content_type = response.headers.get("Content-Type", "").lower()
+
+                if "application/json" in content_type:
+                    data = await response.json()
+                else:
+                    data = await response.text()
+
+                logger.info(f"Response: {data}")
+
+                return data, response.status
+
+        except Exception as e:
+            logger.error(f"Error in GET request to {url}: {e}")
+
+            if response.status not in retryable_errors:
+                return None, response.status
+
+            logger.info(f"Retrying in {delay} seconds...")
+
+            await asyncio.sleep(delay)
+            delay *= 2
+            continue
+
+    return None, 500

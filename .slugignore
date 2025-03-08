@@ -2,7 +2,6 @@ notebooks/
 ml/
 data/
 .streamlit/
-requirements.txt
 markdown/
 src/streamlit_app/
 figures/

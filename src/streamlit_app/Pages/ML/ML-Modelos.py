@@ -26,10 +26,17 @@ columns = ['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'
 def load_gru():
     return load_model(os.path.join(model_path, 'gru.keras'))
 
+@st.cache_resource
+def load_simple_rnn():
+    return load_model(os.path.join(model_path, 'simplernn.keras'))
+
+@st.cache_resource
+def load_lstm():
+    return load_model(os.path.join(model_path, 'lstm.keras'))
 
 @st.cache_resource
 def load_prophet():
-    url = "https://rednvrsdcuwtwyfxtjru.supabase.co/storage/v1/object/public/ml//prophet.joblib"
+    url = "https://rednvrsdcuwtwyfxtjru.supabase.co/storage/v1/object/public/ml//prophet.pkl"
 
     try:
         response = requests.get(url, timeout=20)
@@ -51,18 +58,20 @@ def load_prophet():
 
 @st.cache_resource
 def load_scalers():
-    _scaler_X = joblib.load(os.path.join(scaler_path, 'scaler_X_train.joblib'))
-    _scaler_y = joblib.load(os.path.join(scaler_path, 'scaler_y_train.joblib'))
+    _scaler_X = joblib.load(os.path.join(scaler_path, 'scaler_X_full.joblib'))
+    _scaler_y = joblib.load(os.path.join(scaler_path, 'scaler_y_full.joblib'))
 
     return _scaler_X, _scaler_y
 
 gru = load_gru()
+simple_rnn = load_simple_rnn()
+lstm = load_lstm()
 prophet = load_prophet()
 
 scaler_X, scaler_y = load_scalers()
 
 
-def predict_gru():
+def predict_keras(model):
     df_scaled = df.copy()
     df_scaled = df_scaled.set_index('fecha')
     df_scaled = scale.scale_df(df_scaled, scaler_X, scaler_y)
@@ -74,7 +83,7 @@ def predict_gru():
 
     X_seq, y_seq, dates_seq = create_sequences(X, y, df_scaled.index)
 
-    y_pred = gru.predict(X_seq)
+    y_pred = model.predict(X_seq)
     y_pred_inverse = scaler_y.inverse_transform(y_pred).flatten()
 
     future_dates = []
@@ -117,7 +126,9 @@ def predict_prophet():
 
 
 def make_prediction():
-    df_gru = predict_gru()
+    df_gru = predict_keras(gru)
+    df_lstm = predict_keras(lstm)
+    df_simple_rnn = predict_keras(simple_rnn)
     df_prop = predict_prophet()
     df_hist = pd.DataFrame({
         'fecha': df['fecha'],
@@ -126,6 +137,8 @@ def make_prediction():
 
     # add the last date from hist onto start of gru and prop
     df_gru = pd.concat([df_hist.tail(1), df_gru])
+    df_lstm = pd.concat([df_hist.tail(1), df_lstm])
+    df_simple_rnn = pd.concat([df_hist.tail(1), df_simple_rnn])
     df_prop = pd.concat([df_hist.tail(1), df_prop])
 
     result = df_hist.rename(columns={'tmed': 'historical_tmed'})
@@ -133,6 +146,20 @@ def make_prediction():
     result = pd.merge(
         result,
         df_gru.rename(columns={'tmed': 'gru_tmed'}),
+        on='fecha',
+        how='outer'
+    )
+
+    result = pd.merge(
+        result,
+        df_lstm.rename(columns={'tmed': 'lstm_tmed'}),
+        on='fecha',
+        how='outer'
+    )
+
+    result = pd.merge(
+        result,
+        df_simple_rnn.rename(columns={'tmed': 'simple_rnn_tmed'}),
         on='fecha',
         how='outer'
     )

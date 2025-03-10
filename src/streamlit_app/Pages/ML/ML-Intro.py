@@ -1,96 +1,56 @@
+import os
 import streamlit as st
 from helpers.config import script_dir
-import os
+from src.streamlit_app.Pages.ML.RNNs import show
 
-with open(os.path.join(script_dir, '../markdown/ML Preprocessing.md'), "r") as f:
-    intro_content = f.read()
+intro, gru, lstm, simple_rnn, prophet = st.tabs(["Introducción", "GRU", "LSTM", "SimpleRNN", "Prophet"])
 
-intro, gru, prophet, simple_rnn = st.tabs(["Introducción", "GRU", "Prophet", "SimpleRNN"])
+with intro:
+    with open(os.path.join(script_dir, "../data/model_res/markdown/ML-Intro.md"), "r") as f:
+        intro_content = f.read()
 
-intro.markdown(intro_content, unsafe_allow_html=True)
+    intro.markdown(intro_content, unsafe_allow_html=True)
 
-gru.markdown("""
-## Modelo Gated Recurrent Unit (GRU)
+with gru:
+    gru.markdown("""
+    ## Modelo Gated Recurrent Unit (GRU)
 
-El modelo GRU es una variante de las redes neuronales recurrentes (RNN) que intenta resolver el problema de la desaparición del gradiente. A diferencia de las RNN tradicionales, las GRU tienen una estructura más simple y solo tienen dos puertas: una de reinicio y otra de actualización. Estas puertas permiten que las GRU "olviden" o "recuerden" información de manera más eficiente que las RNN tradicionales.
+    El modelo GRU es una variante de las redes neuronales recurrentes (RNN) que intenta resolver el problema de la desaparición del gradiente. A diferencia de las RNN tradicionales, las GRU tienen una estructura más simple y solo tienen dos puertas: una de reinicio y otra de actualización. Estas puertas permiten que las GRU "olviden" o "recuerden" información de manera más eficiente que las RNN tradicionales.
 
-""")
+    """)
 
-gru.markdown(
-    """ ##### Para la implementación de este modelo, se ha utilizado la librería de Keras. A continuación, se muestra un resumen de los resultados obtenidos""")
+    show(gru, "gru")
 
-gru.markdown("""---""")
+with simple_rnn:
 
-gru.markdown(
-    """
-    ### Métricas de Evaluación
-    | MSE | MAE | RMSE | R2 |
-    | --- | --- | --- | --- |
-    | 0.004346 | 0.050778 | 0.065923 | 0.7276359 |
-    """
-)
+    simple_rnn.markdown("""
+    
+    ## Modelo SimpleRNN
+    
+    El modelo SimpleRNN es una variante de las redes neuronales recurrentes (RNN) que intenta resolver el problema de la desaparición del gradiente. A diferencia de las RNN tradicionales, las SimpleRNN tienen una estructura más simple y solo tienen una puerta. Esta puerta permite que las SimpleRNN "olviden" o "recuerden" información de manera más eficiente que las RNN tradicionales.
+    
+    """)
 
-gru.markdown("""---""")
+    show(simple_rnn, "simplernn")
 
-gru.markdown(
-    """
-    ### Análisis de Residuos
-    En la siguiente imagen se muestra un análisis de comparación entre los valores reales y los valores predichos por el modelo GRU:
-    """
-)
+with lstm:
 
-gru.image("figures/gru_comparison_analysis.png", caption="GRU Residual Analysis")
+    lstm.markdown("""
+    ## Modelo Long Short-Term Memory (LSTM)
 
-gru.markdown("""---""")
+    El modelo LSTM es una variante de las redes neuronales recurrentes (RNN) que intenta resolver el problema de la desaparición del gradiente. A diferencia de las RNN tradicionales, las LSTM tienen una estructura más compleja y tienen tres puertas: una de reinicio, una de actualización y una de olvido. Estas puertas permiten que las LSTM "olviden" o "recuerden" información de manera más eficiente que las RNN tradicionales.
 
-gru.markdown(
-    """
-    ### Histograma de Error
-    En la siguiente imagen se muestra el histograma de los errores residuales del modelo GRU:
-    """
-)
+    """)
 
-gru.image("figures/gru_prediction_error_histogram.png", caption="GRU Prediction Error Histogram")
+    show(lstm, "lstm")
 
-gru.markdown("""---""")
+with prophet:
 
-gru.markdown(
-    """
-    ### Historial de Entrenamiento
-    En la siguiente imagen se muestra el historial de las métricas durante el entrenamiento del modelo GRU:
-    """
-)
+    prophet.markdown("""
+    ## Modelo Prophet
 
-gru.image("figures/gru_training_history.png", caption="GRU Training History")
+    Prophet es una librería de código abierto desarrollada por Facebook. Esta librería está diseñada para realizar pronósticos de series temporales de manera sencilla y eficiente. Prophet es capaz de manejar series temporales con tendencias, estacionalidades y días festivos. Además, Prophet es capaz de manejar datos faltantes y outliers de manera eficiente.
 
+    """)
 
-prophet.markdown("""
-## Modelo Prophet
-
-El modelo Prophet es un modelo de series temporales desarrollado por Facebook que está diseñado para ser fácil de usar y ajustarse a una amplia variedad de conjuntos de datos. Prophet es capaz de manejar tendencias no lineales, efectos estacionales y días festivos, y también es robusto a los valores atípicos.
-
-""")
-
-prophet.markdown("""---""")
-
-prophet.markdown(
-    """
-    ### Análisis de Residuos
-    En la siguiente imagen se muestra un análisis de comparación entre los valores reales y los valores predichos por el modelo Prophet:
-    """
-)
-
-prophet.image("figures/prophet_comparison_analysis.png", caption="Prophet Residual Analysis")
-
-prophet.markdown("""---""")
-
-prophet.markdown(
-    """
-    ### Histograma de Error
-    En la siguiente imagen se muestra el histograma de los errores residuales del modelo Prophet:
-    """
-)
-
-prophet.image("figures/prophet_prediction_error_histogram.png", caption="Prophet Prediction Error Histogram")
-
-prophet.markdown("""---""")
+    show(prophet, "prophet")

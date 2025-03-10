@@ -22,8 +22,10 @@ files = [
     {"name": "scaler_X_train.joblib", "description": "Scaler for X_train", "url": f"{BASE_URL}/scaler_X_train.joblib"},
     {"name": "scaler_y_train.joblib", "description": "Scaler for y_train", "url": f"{BASE_URL}/scaler_y_train.joblib"},
 
-    {"name": "prophet.joblib", "description": "Prophet model", "url": f"{BASE_URL}/prophet.joblib"},
-    {"name": "gru.keras", "description": "GRU model", "url": f"{BASE_URL}/gru.keras"}
+    {"name": "prophet.joblib", "description": "Modelo Prophet", "url": f"{BASE_URL}/prophet.pkl"},
+    {"name": "gru.keras", "description": "Modelo GRU", "url": f"{BASE_URL}/gru.keras"},
+    {"name": "lstm.keras", "description": "Modelo LSTM", "url": f"{BASE_URL}/lstm.keras"},
+    {"name": "simple_rnn.keras", "description": "Modelo SimpleRNN", "url": f"{BASE_URL}/simple_rnn.keras"}
 ]
 
 st.title("📊 Datasets para los modelos de Machine Learning")
@@ -54,15 +56,15 @@ with tab1:
     col3, col4 = st.columns(2)
 
     with col3:
-        st.subheader("Scalers")
-        for file in files[8:12]:
+        st.subheader("Modelos")
+        for file in files[12:]:
             with st.expander(file["name"]):
                 st.write(file["description"])
                 st.markdown(f"[Descargar {file['name']}]({file['url']})")
 
     with col4:
-        st.subheader("Modelos")
-        for file in files[12:]:
+        st.subheader("Scalers")
+        for file in files[8:12]:
             with st.expander(file["name"]):
                 st.write(file["description"])
                 st.markdown(f"[Descargar {file['name']}]({file['url']})")

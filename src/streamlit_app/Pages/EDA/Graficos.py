@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 import pandas as pd
 import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
@@ -106,13 +108,32 @@ def show_daily_average():
 
 data = None
 
+offset_map = {
+    '1W': 7,
+    '1M': 30,
+    '3M': 90,
+    '6M': 180,
+    '1Y': 365,
+    '2Y': 730,
+    '5Y': 1825
+}
+
+rango_historico = st.pills(options=offset_map.keys(), label='Rango predicción', key="rango", default='1W')
+if rango_historico is None:
+    st.stop()
+
+fecha_final = datetime.now().strftime('%Y-%m-%d')
+
+fecha_inicial = (datetime.now() - timedelta(days=offset_map[rango_historico]+11)).strftime('%Y-%m-%d')
+
+
 with st.sidebar:
-    fecha_inicial, fecha_final = date_range_filter('gráficos')
     provincia = st.selectbox("Selecciona la provincia", prov_names)
     prov_id = provincia_lookup[provincia]
 
-    if st.button("Aplicar") or st.session_state.first_run:
+    if st.button("Aplicar") or st.session_state.first_run or rango_historico != st.session_state.rango_historico:
         st.session_state.first_run = False
+        st.session_state.rango_historico = rango_historico
 
         with st.spinner("Cargando datos..."):
             st.session_state.graficos_data = api.get_historico_average(

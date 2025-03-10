@@ -118,7 +118,7 @@ offset_map = {
     '5Y': 1825
 }
 
-rango_historico = st.pills(options=offset_map.keys(), label='Rango predicción', key="rango", default='1W')
+rango_historico = st.pills(options=offset_map.keys(), label='Rango Histórico', key="rango", default='1W')
 if rango_historico is None:
     st.stop()
 

@@ -96,7 +96,14 @@ def plot_forecast(result_df, predict_start):
         template='plotly_white',
         height=500,
         margin=dict(l=20, r=20, t=50, b=20),
-        hovermode='x unified'
+        hovermode='x unified',
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.4,
+            xanchor="center",
+            x=0.5
+        )
     )
 
     return fig

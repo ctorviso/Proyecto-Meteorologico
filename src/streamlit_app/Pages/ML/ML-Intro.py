@@ -1,15 +1,11 @@
-import os
 import streamlit as st
-from helpers.config import script_dir
 from src.streamlit_app.Pages.ML.RNNs import show
+from src.streamlit_app.Pages.ML.Intro import show as show_intro
 
 intro, gru, lstm, simple_rnn, prophet = st.tabs(["Introducción", "GRU", "LSTM", "SimpleRNN", "Prophet"])
 
 with intro:
-    with open(os.path.join(script_dir, "../data/model_res/markdown/ML-Intro.md"), "r") as f:
-        intro_content = f.read()
-
-    intro.markdown(intro_content, unsafe_allow_html=True)
+    show_intro(intro)
 
 with gru:
     gru.markdown("""

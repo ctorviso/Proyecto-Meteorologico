@@ -86,18 +86,8 @@ def predict_keras(model):
     y_pred = model.predict(X_seq)
     y_pred_inverse = scaler_y.inverse_transform(y_pred).flatten()
 
-    future_dates = []
-
-    if isinstance(dates_seq[0], (list, np.ndarray)):
-        for date_sequence in dates_seq:
-            last_date = date_sequence[-1]
-            if isinstance(last_date, pd.Timestamp):
-                future_dates.append(last_date + pd.Timedelta(days=1))
-            else:
-                future_dates.append(pd.Timestamp(last_date) + pd.Timedelta(days=1))
-    else:
-        last_date = df_scaled.index[-1]
-        future_dates = [last_date + pd.Timedelta(days=i + 1) for i in range(len(y_pred_inverse))]
+    last_date = df_scaled.index[-1]
+    future_dates = [last_date + pd.Timedelta(days=i) for i in range(len(y_pred_inverse))]
 
     return pd.DataFrame({
         'fecha': future_dates,
@@ -106,7 +96,7 @@ def predict_keras(model):
 
 
 def predict_prophet():
-    days_ahead = len(df['fecha'].unique())-7
+    days_ahead = len(df['fecha'].unique())-8
     last_historical_date = df['fecha'].max()
 
     future_dates = pd.date_range(
@@ -190,10 +180,12 @@ offset_map = {
 }
 
 tiempo_prediccion = st.pills(options=offset_map.keys(), label='Rango predicción', key="rango", default='1W')
+if tiempo_prediccion is None:
+    st.stop()
 
 fecha_final = datetime.now().strftime('%Y-%m-%d')
 
-fecha_inicial = (datetime.now() - timedelta(days=offset_map[tiempo_prediccion]+10)).strftime('%Y-%m-%d')
+fecha_inicial = (datetime.now() - timedelta(days=offset_map[tiempo_prediccion]+11)).strftime('%Y-%m-%d')
 
 with st.sidebar:
 
@@ -224,11 +216,16 @@ if 'ml_data' not in st.session_state:
 
 data = st.session_state.ml_data
 
-if len(data) == 0:
+if len(data) == 0 or data is None:
     st.error("No hay datos disponibles para el rango seleccionado.")
 else:
     df = pd.DataFrame(data)
+
     df = clean.clean_df(df)
     df = impute.impute_knn(df)
+
+    if df['tmed'].isna().mean() >= 0.5:
+        st.error("No hay suficientes datos disponibles para el rango seleccionado.")
+        st.stop()
 
     make_prediction()

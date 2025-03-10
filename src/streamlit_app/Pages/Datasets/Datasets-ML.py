@@ -22,7 +22,7 @@ files = [
     {"name": "scaler_X_train.joblib", "description": "Scaler for X_train", "url": f"{BASE_URL}/scaler_X_train.joblib"},
     {"name": "scaler_y_train.joblib", "description": "Scaler for y_train", "url": f"{BASE_URL}/scaler_y_train.joblib"},
 
-    {"name": "prophet.joblib", "description": "Modelo Prophet", "url": f"{BASE_URL}/prophet.pkl"},
+    {"name": "prophet.pkl", "description": "Modelo Prophet", "url": f"{BASE_URL}/prophet.pkl"},
     {"name": "gru.keras", "description": "Modelo GRU", "url": f"{BASE_URL}/gru.keras"},
     {"name": "lstm.keras", "description": "Modelo LSTM", "url": f"{BASE_URL}/lstm.keras"},
     {"name": "simple_rnn.keras", "description": "Modelo SimpleRNN", "url": f"{BASE_URL}/simple_rnn.keras"}

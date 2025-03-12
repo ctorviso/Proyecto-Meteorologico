@@ -33,25 +33,25 @@ with st.sidebar:
     estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
     idema = [estacion_lookup[estacion]]
 
-
-if st.session_state.ml_first_run or 'ml_df' not in st.session_state:
-    st.session_state.ml_first_run = False
-
-    with st.spinner("Cargando datos..."):
-        _ml_data = api.get_historico(
-            columns=['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'],
-            fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
-            fecha_fin=datetime.now().strftime('%Y-%m-%d'),
-            idemas=idema
-        )
-
-        _df = pd.DataFrame(_ml_data)
-        _df = clean.clean_df(_df)
-        _df = impute.impute_knn(_df)
-
-        st.session_state.ml_df = _df
-
-    st.rerun()
+    
+    if st.button("Aplicar") or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
+        st.session_state.ml_first_run = False
+    
+        with st.spinner("Cargando datos..."):
+            _ml_data = api.get_historico(
+                columns=['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'],
+                fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
+                fecha_fin=datetime.now().strftime('%Y-%m-%d'),
+                idemas=idema
+            )
+    
+            _df = pd.DataFrame(_ml_data)
+            _df = clean.clean_df(_df)
+            _df = impute.impute_knn(_df)
+    
+            st.session_state.ml_df = _df
+    
+        st.rerun()
 
 rango_historico = st.pills(options=dict(list(offset_map.items())[:-2]), label='Rango histórico:', key="rango", default=list(offset_map.keys())[0])
 if rango_historico is None:

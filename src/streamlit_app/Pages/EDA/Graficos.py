@@ -1,15 +1,12 @@
 from datetime import datetime, timedelta
-
 import pandas as pd
 import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
-
 from helpers import api
 from helpers.lookups import element_cols_map_numeric, label_maps, histogram_color_maps, numeric_cols, scatter_cols, \
-    scatter_color_maps, provincia_lookup, prov_names
+    scatter_color_maps, provincia_lookup, prov_names, offset_map
 from helpers.preprocessing import convert_numeric, log_transform_df
 from helpers.visualization import histograms, scatter_matrix, time_series
-from src.streamlit_app.components.filters import date_range_filter
 from src.streamlit_app.components.tabs import element_tabs
 
 if "first_run" not in st.session_state:
@@ -108,22 +105,11 @@ def show_daily_average():
 
 data = None
 
-offset_map = {
-    '1W': 7,
-    '1M': 30,
-    '3M': 90,
-    '6M': 180,
-    '1Y': 365,
-    '2Y': 730,
-    '5Y': 1825
-}
-
-rango_historico = st.pills(options=offset_map.keys(), label='Rango Histórico', key="rango", default='1W')
+rango_historico = st.pills(options=offset_map.keys(), label='Rango Histórico', key="rango", default=list(offset_map.keys())[0])
 if rango_historico is None:
     st.stop()
 
 fecha_final = datetime.now().strftime('%Y-%m-%d')
-
 fecha_inicial = (datetime.now() - timedelta(days=offset_map[rango_historico]+11)).strftime('%Y-%m-%d')
 
 

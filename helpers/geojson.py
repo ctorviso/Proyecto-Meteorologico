@@ -46,10 +46,11 @@ def combine_features():
 
     return features
 
-geodata_provincias = {
-    "type": "FeatureCollection",
-    "features": combine_features()
-}
+def get_geodata_provincias():
+    return {
+        "type": "FeatureCollection",
+        "features": combine_features()
+    }
 
 def inject_col_values(geojson, df, cols):
 

@@ -15,7 +15,6 @@ pydantic
 
 # Streamlit
 streamlit
-streamlit-folium
 
 # HTTP
 requests
@@ -32,12 +31,11 @@ pandas
 
 # Machine Learning
 tensorflow==2.18.0
-keras==3.8.0
+keras==3.9.0
 scikit-learn
 joblib
 prophet
 
 # Data Visualization
-folium
 matplotlib
 plotly

@@ -248,7 +248,89 @@ def bar_plots(
         xaxis_tickangle=-45,
         title_x=0.5,
         xaxis_title=x_label,
-        yaxis_title=y_label
+        yaxis_title=y_label,
+        legend=dict(
+            title='',
+            orientation="h",
+            yanchor="bottom",
+            y=-0.6,
+            xanchor="center",
+            x=0.5,
+            traceorder="normal",
+            font=dict(size=12),
+            bgcolor="rgba(255, 255, 255, 0)",
+        )
     )
+
+    return fig
+
+def choropleth_map(
+        avg_df: pd.DataFrame,
+        selected_column: str,
+        geojson: dict,
+        label_maps: dict,
+        choropleth_color_maps: dict
+):
+
+    fig = px.choropleth(
+        data_frame=avg_df[['provincia_id', selected_column, 'provincia']],
+        geojson=geojson,
+        color=selected_column,
+        locations='provincia_id',
+        featureidkey="properties.provincia_id",
+        labels={
+            selected_column: label_maps[selected_column],
+            'Provincia': 'provincia'
+        },
+        hover_data={'provincia': True, selected_column: True, 'provincia_id': False},
+        color_continuous_scale=choropleth_color_maps[selected_column],
+        hover_name='provincia',
+    )
+
+    fig.update_geos(
+        center={"lat": 39.7, "lon": -3.2},
+        projection_scale=20,
+        showframe=False,
+        resolution=50,
+    )
+
+    fig.update_layout(
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        geo=dict(
+            showcoastlines=True,
+            coastlinecolor="rgba(0, 0, 0, 0.2)",
+            showland=True,
+            landcolor="white",
+            showocean=True,
+            oceancolor="rgba(173, 216, 230, 0.4)",
+            showcountries=True,
+            countrycolor="rgba(0, 0, 0, 0.2)"
+        ),
+        coloraxis_colorbar=dict(
+            thickness=15,
+            len=0.7,
+            xanchor="right",
+            x=0,
+            yanchor="middle",
+            y=0.5,
+            title=dict(
+                text=label_maps[selected_column],
+                side="right"
+            ),
+            outlinewidth=1,
+        ),
+        geo_showframe=True,
+        geo_framecolor="rgba(150, 150, 150, 0.3)",
+        geo_framewidth=2,
+    )
+
+    fig.update_traces(
+        hovertemplate='<b>%{hovertext}</b><br>' +
+                      f'{label_maps[selected_column]}: %{{z:.2f}}<extra></extra>'
+    )
+
+    fig.update_traces(marker_line_width=0.3, marker_line_color="rgba(0, 0, 0, 0.3)")
 
     return fig

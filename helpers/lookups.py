@@ -142,3 +142,13 @@ scatter_color_maps = {
     'presion': 'Pink',
     'sol': 'Yellow'
 }
+
+offset_map = {
+    'Semana': 7,
+    'Mes': 30,
+    '3 Meses': 90,
+    '6 Meses': 180,
+    '1 Año': 365,
+    '2 Años': 730,
+    '5 Años': 1825
+}

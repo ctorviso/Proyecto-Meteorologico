@@ -9,7 +9,7 @@ import streamlit as st
 from keras.api.models import load_model
 from helpers import api
 from helpers.config import script_dir
-from helpers.lookups import prov_names, provincia_lookup, estacion_lookup, estaciones
+from helpers.lookups import prov_names, provincia_lookup, estacion_lookup, estaciones, offset_map
 from ml.scripts import clean, impute, scale
 from ml.scripts.create_sequence import create_sequences
 from ml.scripts.graphs import plot_forecast
@@ -169,22 +169,11 @@ def make_prediction():
 
     st.plotly_chart(fig)
 
-offset_map = {
-    '1W': 7,
-    '1M': 30,
-    '3M': 90,
-    '6M': 180,
-    '1Y': 365,
-    '2Y': 730,
-    '5Y': 1825
-}
-
-tiempo_prediccion = st.pills(options=offset_map.keys(), label='Rango predicción', key="rango", default='1W')
+tiempo_prediccion = st.pills(options=offset_map.keys(), label='Rango predicción', key="rango", default=list(offset_map.keys())[0])
 if tiempo_prediccion is None:
     st.stop()
 
 fecha_final = datetime.now().strftime('%Y-%m-%d')
-
 fecha_inicial = (datetime.now() - timedelta(days=offset_map[tiempo_prediccion]+11)).strftime('%Y-%m-%d')
 
 with st.sidebar:
@@ -194,7 +183,7 @@ with st.sidebar:
 
     filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
     est_names = [estaciones[idema]['nombre'] for idema in filtered_idemas]
-    estacion = st.selectbox("Selecciona la estación", est_names)
+    estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
     idema = [estacion_lookup[estacion]]
 
 

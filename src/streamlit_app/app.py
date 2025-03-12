@@ -8,7 +8,7 @@ st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:
 def main():
     pages = {
         "Principal": [
-            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Bienvenidos"),
+            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Bienvenid@s"),
             st.Page("src/streamlit_app/Pages/Main/About_us.py", title="👩‍💻 Sobre nosotras"),
         ],
         "Análisis Exploratorio de Datos": [

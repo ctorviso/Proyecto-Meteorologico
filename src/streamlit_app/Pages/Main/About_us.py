@@ -16,7 +16,7 @@ sara_github = "https://github.com/saragarcia6123"
 
 st.markdown("""
 #### ¿Quiénes somos?:
-Somos tres estudiantes de Data Science en Hack A Boss que nos hemos unido para implementar nuestros conocimientos adquiridos durante el bootcamp en un proyecto con datos reales.
+Somos tres estudiantes de Data Science en [HACK A BOSS](https://www.hackaboss.com/) que nos hemos unido para implementar nuestros conocimientos adquiridos durante el bootcamp en un proyecto con datos reales.
             """)
 
 st.markdown("""---""")

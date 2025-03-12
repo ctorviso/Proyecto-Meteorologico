@@ -21,7 +21,7 @@ scaler_path = os.path.join(script_dir, '../ml/scalers')
 if "ml_first_run" not in st.session_state:
     st.session_state.ml_first_run = True
 
-st.title("Predicciónes ML :brain:")
+st.title(":brain: Predicciones ML")
 
 with st.sidebar:
 
@@ -65,7 +65,7 @@ if "rango_historico" not in st.session_state:
 
 rango_historico = st.pills(
     options=list(offset_map.keys())[:-2],
-    label='Rango predicción:',
+    label='Rango de la predicción:',
     key="rango",
     default=st.session_state.rango_historico
 )

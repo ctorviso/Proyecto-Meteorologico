@@ -12,7 +12,7 @@ from src.streamlit_app.components.tabs import element_tabs
 if "first_run" not in st.session_state:
     st.session_state.first_run = True
 
-st.title("Análisis Exploratorio de Datos :chart_with_upwards_trend:")
+st.title(":chart_with_upwards_trend: Análisis Exploratorio de Datos")
 
 element_tabs()
 selected_element = st.session_state.selected_element

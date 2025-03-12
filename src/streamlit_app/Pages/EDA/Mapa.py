@@ -14,7 +14,7 @@ from src.streamlit_app.Pages.EDA.Graficos import selected_element
 if "mapa_first_run" not in st.session_state:
     st.session_state.mapa_first_run = True
 
-st.title("Mapa Coroplético :world_map:")
+st.title(":world_map: Mapa Coroplético")
 
 with st.sidebar:
     selected_element = st.selectbox(options=[element.capitalize() for element in elements], label='Elemento')

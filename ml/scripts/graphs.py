@@ -1,8 +1,11 @@
 import plotly.graph_objects as go
 
 
-def plot_forecast(result_df, predict_start):
+def plot_forecast(result_df, predict_start, start_date, end_date):
     fig = go.Figure()
+
+    result_df = result_df[result_df['fecha'] >= start_date]
+    result_df = result_df[result_df['fecha'] <= end_date]
 
     historical = result_df[result_df['fecha'] <= predict_start]
     future = result_df[result_df['fecha'] > predict_start]

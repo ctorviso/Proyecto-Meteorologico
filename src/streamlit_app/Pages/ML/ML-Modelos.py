@@ -1,12 +1,13 @@
 import io
 import os
 from datetime import datetime, timedelta
+
 import joblib
 import pandas as pd
-import numpy as np
 import requests
 import streamlit as st
 from keras.api.models import load_model
+
 from helpers import api
 from helpers.config import script_dir
 from helpers.lookups import prov_names, provincia_lookup, estacion_lookup, estaciones, offset_map
@@ -20,7 +21,50 @@ scaler_path = os.path.join(script_dir, '../ml/scalers')
 if "ml_first_run" not in st.session_state:
     st.session_state.ml_first_run = True
 
-columns = ['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media']
+st.title("Predicciónes ML :brain:")
+
+with st.sidebar:
+
+    provincia = st.selectbox("Selecciona la provincia", prov_names[1:])
+    prov_id = provincia_lookup[provincia]
+
+    filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
+    est_names = [estaciones[idema]['nombre'] for idema in filtered_idemas]
+    estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
+    idema = [estacion_lookup[estacion]]
+
+
+if st.session_state.ml_first_run or 'ml_df' not in st.session_state:
+    st.session_state.ml_first_run = False
+
+    with st.spinner("Cargando datos..."):
+        _ml_data = api.get_historico(
+            columns=['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'],
+            fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
+            fecha_fin=datetime.now().strftime('%Y-%m-%d'),
+            idemas=idema
+        )
+
+        _df = pd.DataFrame(_ml_data)
+        _df = clean.clean_df(_df)
+        _df = impute.impute_knn(_df)
+
+        st.session_state.ml_df = _df
+
+    st.rerun()
+
+rango_historico = st.pills(options=dict(list(offset_map.items())[:-2]), label='Rango histórico:', key="rango", default=list(offset_map.keys())[0])
+if rango_historico is None:
+    st.stop()
+
+df = st.session_state.ml_df
+
+if len(df) == 0 or df is None:
+    st.error("No hay datos disponibles para el rango seleccionado.")
+    st.stop()
+
+start_date = df['fecha'].max() - timedelta(days=offset_map[rango_historico])
+end_date = df['fecha'].max() + timedelta(days=offset_map[rango_historico])
 
 @st.cache_resource
 def load_gru():
@@ -96,7 +140,7 @@ def predict_keras(model):
 
 
 def predict_prophet():
-    days_ahead = len(df['fecha'].unique())-8
+    days_ahead = len(df['fecha'].unique())
     last_historical_date = df['fecha'].max()
 
     future_dates = pd.date_range(
@@ -165,56 +209,13 @@ def make_prediction():
 
     predict_start = df['fecha'].values[-1]
 
-    fig = plot_forecast(result, predict_start)
+    fig = plot_forecast(result, predict_start, start_date, end_date)
 
     st.plotly_chart(fig)
 
-tiempo_prediccion = st.pills(options=offset_map.keys(), label='Rango predicción', key="rango", default=list(offset_map.keys())[0])
-if tiempo_prediccion is None:
+
+if df['tmed'].isna().mean() >= 0.5:
+    st.error("No hay suficientes datos disponibles para el rango seleccionado.")
     st.stop()
 
-fecha_final = datetime.now().strftime('%Y-%m-%d')
-fecha_inicial = (datetime.now() - timedelta(days=offset_map[tiempo_prediccion]+11)).strftime('%Y-%m-%d')
-
-with st.sidebar:
-
-    provincia = st.selectbox("Selecciona la provincia", prov_names[1:])
-    prov_id = provincia_lookup[provincia]
-
-    filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
-    est_names = [estaciones[idema]['nombre'] for idema in filtered_idemas]
-    estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
-    idema = [estacion_lookup[estacion]]
-
-
-    if st.button("Aplicar") or st.session_state.ml_first_run or tiempo_prediccion != st.session_state.tiempo_prediccion:
-        st.session_state.ml_first_run = False
-        st.session_state.tiempo_prediccion = tiempo_prediccion
-
-        with st.spinner("Cargando datos..."):
-            st.session_state.ml_data = api.get_historico(
-                columns=columns,
-                idemas=idema,
-                fecha_ini=fecha_inicial,
-                fecha_fin=fecha_final
-            )
-
-if 'ml_data' not in st.session_state:
-    st.header("Aplique los filtros para cargar los datos.")
-    st.stop()
-
-data = st.session_state.ml_data
-
-if len(data) == 0 or data is None:
-    st.error("No hay datos disponibles para el rango seleccionado.")
-else:
-    df = pd.DataFrame(data)
-
-    df = clean.clean_df(df)
-    df = impute.impute_knn(df)
-
-    if df['tmed'].isna().mean() >= 0.5:
-        st.error("No hay suficientes datos disponibles para el rango seleccionado.")
-        st.stop()
-
-    make_prediction()
+make_prediction()

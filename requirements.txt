@@ -14,7 +14,7 @@ uvicorn
 pydantic
 
 # Streamlit
-streamlit
+streamlit==1.42.0
 
 # HTTP
 requests

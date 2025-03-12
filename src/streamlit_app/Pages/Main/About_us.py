@@ -30,7 +30,7 @@ st.markdown(
 )
 
 st.markdown(
-    f"* **Ana Paola Gutiérrez** <a href='{paola_linkedin}' target='_blank'><img src='{linkedin_logo}' width='20'></a> <a href='{paola_linkedin}' target='_blank'><img src='{github_logo}' width='20' style='filter: invert(100%);'></a>",
+    f"* **Ana Paola Gutiérrez** <a href='{paola_linkedin}' target='_blank'><img src='{linkedin_logo}' width='20'></a> <a href='{paola_github}' target='_blank'><img src='{github_logo}' width='20' style='filter: invert(100%);'></a>",
     unsafe_allow_html=True
 )
 

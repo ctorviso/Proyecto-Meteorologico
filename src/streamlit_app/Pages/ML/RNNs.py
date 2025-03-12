@@ -48,7 +48,7 @@ def show(tab, model):
         """
     )
 
-    daily_stats_fig_tab = open(os.path.join(script_dir, f"../data/model_res/daily_stats/figures/{model}.html"), "r").read()
+    daily_stats_fig_tab = open(os.path.join(script_dir, f"../data/model_res/daily_stats/figures/{model}.html"), "r", encoding='utf-8').read()
     components.html(daily_stats_fig_tab, height=650)
 
     tab.markdown("""---""")
@@ -60,7 +60,7 @@ def show(tab, model):
         """
     )
 
-    error_hist_fig_tab = open(os.path.join(script_dir, f"../data/model_res/differences/{model}.html"), "r").read()
+    error_hist_fig_tab = open(os.path.join(script_dir, f"../data/model_res/differences/{model}.html"), "r", encoding='utf-8').read()
     components.html(error_hist_fig_tab, height=650, width=1200)
 
     tab.markdown("""---""")
@@ -74,11 +74,11 @@ def show(tab, model):
             """
         )
 
-        history_fig_tab = open(os.path.join(script_dir, f"../data/model_res/history/figures/{model}.html"), "r").read()
+        history_fig_tab = open(os.path.join(script_dir, f"../data/model_res/history/figures/{model}.html"), "r", encoding='utf-8').read()
         components.html(history_fig_tab, height=1200)
 
         history_scaled_fig_tab = open(os.path.join(script_dir, f"../data/model_res/history/figures/{model}_scaled.html"),
-                                      "r").read()
+                                      "r", encoding='utf-8').read()
 
         components.html(history_scaled_fig_tab, height=600)
 
@@ -93,6 +93,6 @@ def show(tab, model):
         )
 
         forecast_fig = open(os.path.join(script_dir, "../data/model_res/daily_stats/figures/prophet_forecast.html"),
-                            "r").read()
+                            "r", encoding='utf-8').read()
 
         components.html(forecast_fig, height=800)

@@ -10,7 +10,7 @@ from keras.api.models import load_model
 
 from helpers import api
 from helpers.config import script_dir
-from helpers.lookups import prov_names, provincia_lookup, estacion_lookup, estaciones, offset_map
+from helpers.lookups import prov_names, provincia_lookup, estacion_lookup, estaciones, offset_map, estaciones_df
 from ml.scripts import clean, impute, scale
 from ml.scripts.create_sequence import create_sequences
 from ml.scripts.graphs import plot_forecast
@@ -27,33 +27,51 @@ with st.sidebar:
 
     provincia = st.selectbox("Selecciona la provincia", prov_names[1:])
     prov_id = provincia_lookup[provincia]
+    if 'prov_id' not in st.session_state:
+        st.session_state.prov_id = prov_id
 
     filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
-    est_names = [estaciones[idema]['nombre'] for idema in filtered_idemas]
+    est_names = ['Todas'] + [estaciones[idema]['nombre'] for idema in filtered_idemas]
     estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
-    idema = [estacion_lookup[estacion]]
+    if estacion != 'Todas':
+        idema = estacion_lookup[estacion]
 
     
-    if st.button("Aplicar") or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
+    if st.button("Aplicar") or prov_id != st.session_state.prov_id or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
         st.session_state.ml_first_run = False
+        st.session_state.prov_id = prov_id
     
         with st.spinner("Cargando datos..."):
             _ml_data = api.get_historico(
                 columns=['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'],
                 fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
                 fecha_fin=datetime.now().strftime('%Y-%m-%d'),
-                idemas=idema
+                idemas=filtered_idemas
             )
     
             _df = pd.DataFrame(_ml_data)
+            _df = _df.sort_values('fecha')
+            idemas = _df['idema']
             _df = clean.clean_df(_df)
             _df = impute.impute_knn(_df)
+            _df['idema'] = idemas
     
             st.session_state.ml_df = _df
     
         st.rerun()
 
-rango_historico = st.pills(options=dict(list(offset_map.items())[:-2]), label='Rango histórico:', key="rango", default=list(offset_map.keys())[0])
+if "rango_historico" not in st.session_state:
+    st.session_state.rango_historico = list(offset_map.keys())[0]  # Set to the first option initially
+
+rango_historico = st.pills(
+    options=list(offset_map.keys())[:-2],
+    label='Rango predicción:',
+    key="rango",
+    default=st.session_state.rango_historico
+)
+
+st.session_state.rango_historico = rango_historico
+
 if rango_historico is None:
     st.stop()
 
@@ -64,7 +82,16 @@ if len(df) == 0 or df is None:
     st.stop()
 
 start_date = df['fecha'].max() - timedelta(days=offset_map[rango_historico])
-end_date = df['fecha'].max() + timedelta(days=offset_map[rango_historico])
+end_date = df['fecha'].max() + timedelta(days=offset_map[rango_historico]-1)
+
+if estacion != 'Todas':
+    df = df[df['idema'] == idema]
+    df = df.drop(columns=['idema'])
+else:
+    df = pd.merge(df, estaciones_df[['idema', 'provincia_id']], on='idema', how='left')
+    df = df.drop(columns=['idema'])
+    df = df.groupby(['fecha', 'provincia_id']).mean().reset_index()
+    df = df.drop(columns=['provincia_id'])
 
 @st.cache_resource
 def load_gru():
@@ -117,6 +144,7 @@ scaler_X, scaler_y = load_scalers()
 
 def predict_keras(model):
     df_scaled = df.copy()
+
     df_scaled = df_scaled.set_index('fecha')
     df_scaled = scale.scale_df(df_scaled, scaler_X, scaler_y)
 
@@ -131,7 +159,7 @@ def predict_keras(model):
     y_pred_inverse = scaler_y.inverse_transform(y_pred).flatten()
 
     last_date = df_scaled.index[-1]
-    future_dates = [last_date + pd.Timedelta(days=i) for i in range(len(y_pred_inverse))]
+    future_dates = [last_date + pd.Timedelta(days=i+1) for i in range(len(y_pred_inverse))]
 
     return pd.DataFrame({
         'fecha': future_dates,
@@ -140,7 +168,7 @@ def predict_keras(model):
 
 
 def predict_prophet():
-    days_ahead = len(df['fecha'].unique())
+    days_ahead = offset_map[rango_historico]
     last_historical_date = df['fecha'].max()
 
     future_dates = pd.date_range(

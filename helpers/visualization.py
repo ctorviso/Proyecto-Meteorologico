@@ -154,16 +154,10 @@ def scatter_matrix(
 
     fig.update_layout(
         title=title,
-        width=1300,
-        height=800,
         showlegend=False
     )
 
     return fig
-
-
-import plotly.graph_objects as go
-
 
 def time_series(
         df: pd.DataFrame,
@@ -180,22 +174,32 @@ def time_series(
     for i, col in enumerate(cols):
         fig.add_trace(
             go.Scatter(
-                x=df['fecha'],  # assuming 'fecha' is the column with time series data
+                x=df.index,
                 y=df[col],
-                mode='lines',  # draw lines
-                name=col,  # label in the legend
-                line=dict(color=colors[i]),  # custom line color
-                opacity=opacity  # custom line opacity
+                mode='lines',
+                name=col,
+                line=dict(color=colors[i]),
+                opacity=opacity
             )
         )
 
     fig.update_layout(
         title=title,
+        xaxis_tickangle=-45,
+        title_x=0.5,
         xaxis_title=x_label,
         yaxis_title=y_label,
-        template="plotly_white",
-        title_x=0.5,
-        showlegend=True
+        legend=dict(
+            title='',
+            orientation="h",
+            yanchor="bottom",
+            y=-0.6,
+            xanchor="center",
+            x=0.5,
+            traceorder="normal",
+            font=dict(size=12),
+            bgcolor="rgba(255, 255, 255, 0)",
+        )
     )
 
     return fig

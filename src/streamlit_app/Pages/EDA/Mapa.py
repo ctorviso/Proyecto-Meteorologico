@@ -90,30 +90,5 @@ def show_choropleth_map():
 
     })
 
-def show_histogram_provincias():
-
-    cols = element_cols_map_numeric[selected_element]
-
-    avg_df['provincia'] = avg_df['provincia_id'].apply(lambda x: provincias[x]['nombre'])
-
-    sorted_data = avg_df.groupby('provincia')[cols].mean().sort_values(by=cols[0])
-
-    if st.checkbox("MinMax", key=f"{selected_element}_minmax"):
-        scaler = MinMaxScaler()
-        sorted_data[cols] = scaler.fit_transform(sorted_data[cols])
-
-    fig = bar_plots(
-        sorted_data,
-        title=f"{selected_element.capitalize()} por Provincia",
-        cols=cols,
-        x_label="Provincia",
-        y_label="Valor promedio",
-        label_maps=label_maps,
-        colors=[histogram_color_maps[col] for col in cols]
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
 if st.session_state.selected_element:
     show_choropleth_map()
-    show_histogram_provincias()

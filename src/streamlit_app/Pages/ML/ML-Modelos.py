@@ -37,7 +37,7 @@ with st.sidebar:
         idema = estacion_lookup[estacion]
 
     
-    if st.button("Aplicar") or prov_id != st.session_state.prov_id or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
+    if prov_id != st.session_state.prov_id or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
         st.session_state.ml_first_run = False
         st.session_state.prov_id = prov_id
     
@@ -61,16 +61,15 @@ with st.sidebar:
         st.rerun()
 
 if "rango_historico" not in st.session_state:
-    st.session_state.rango_historico = list(offset_map.keys())[0]  # Set to the first option initially
+    st.session_state.rango_historico = list(offset_map.keys())[0]
 
 rango_historico = st.pills(
     options=list(offset_map.keys())[:-2],
     label='Rango de la predicción:',
     key="rango",
-    default=st.session_state.rango_historico
+    default=st.session_state.rango_historico,
+    on_change=lambda: st.session_state.update({"rango_historico": st.session_state.rango})
 )
-
-st.session_state.rango_historico = rango_historico
 
 if rango_historico is None:
     st.stop()

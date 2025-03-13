@@ -8,8 +8,8 @@ st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:
 def main():
     pages = {
         "Principal": [
-            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Bienvenid@s"),
-            st.Page("src/streamlit_app/Pages/Main/About_us.py", title="👩‍💻 Sobre nosotras"),
+            st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Introducción"),
+            st.Page("src/streamlit_app/Pages/Main/About_us.py", title="👩‍💻 Equipo de Desarrollo"),
         ],
         "Análisis Exploratorio de Datos": [
             st.Page("src/streamlit_app/Pages/EDA/Graficos.py", title="📈 Gráficos"),
@@ -23,8 +23,9 @@ def main():
             st.Page("src/streamlit_app/Pages/Datasets/Datasets-Historico.py", title="📚 Datos Históricos"),
             st.Page("src/streamlit_app/Pages/Datasets/Datasets-ML.py", title="📊 Datos ML"),
         ],
-        "API": [
-            st.Page("src/streamlit_app/Pages/API/API Docs.py", title="📜 API Docs")
+        "Framework": [
+            st.Page("src/streamlit_app/Pages/Framework/API Docs.py", title="📜 API Docs"),
+            st.Page("src/streamlit_app/Pages/Framework/BBDD.py", title="📑 Esquema BBDD"),
         ]
     }
 

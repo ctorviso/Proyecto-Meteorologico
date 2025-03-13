@@ -23,7 +23,7 @@ selected_element = st.session_state.selected_element
 
 def show_graphs():
     col1, col2 = st.columns(2)
-    height = 560
+    height = 580
 
     with col1:
         with st.container(border=True, height=height):
@@ -60,7 +60,8 @@ def show_histograms():
         selected_df,
         title=f"Histograma",
         cols=element_cols_map_numeric[selected_element],
-        x_label=selected_element,
+        col_labels=[label_maps[col] for col in columns],
+        x_label=selected_element.capitalize(),
         colors=colors
     )
     st.plotly_chart(hist, use_container_width=True)
@@ -108,6 +109,7 @@ def show_daily_average():
         df_element,
         title=f"Promedio diario",
         cols=columns,
+        col_labels=[label_maps[col] for col in columns],
         colors=[histogram_color_maps[col] for col in columns],
         x_label="Fecha",
         y_label=selected_element
@@ -124,6 +126,7 @@ def show_histogram_locations():
         sorted_data = avg_df.groupby('provincia')[cols].mean().sort_values(by=cols[0])
     else:
         avg_df['estacion'] = avg_df['idema'].apply(lambda x: estaciones[x]['nombre'])
+        avg_df['estacion'] = avg_df['estacion'].apply(lambda x: x[:15] + '...' if len(x) > 15 else x)
         sorted_data = avg_df.groupby('estacion')[cols].mean().sort_values(by=cols[0])
 
     if st.checkbox("MinMax", key=f"{selected_element}_minmax_provincias"):
@@ -134,7 +137,7 @@ def show_histogram_locations():
         sorted_data,
         title=f"Promedio por provincia" if prov_id == "0" else f"Promedio por estación",
         cols=cols,
-        x_label="Provincia",
+        x_label="",
         y_label="Valor promedio",
         label_maps=label_maps,
         colors=[histogram_color_maps[col] for col in cols]
@@ -208,12 +211,14 @@ if len(df) == 0 or df is None:
 else:
     avg_df = df.copy(deep=True)
     if prov_id != "0":
+        dates = avg_df.index
         avg_df = pd.merge(avg_df, estaciones_df[['idema', 'provincia_id']], on='idema', how='left')
+        avg_df.index = dates
         avg_df = avg_df.drop(columns=['provincia_id'])
         avg_df = convert_numeric(avg_df, numeric_cols)
         if estacion != 'Todas':
             avg_df = avg_df[avg_df['idema'] == idema]
-        daily_avg = avg_df.drop(columns=["idema"]).groupby(avg_df.index).mean().reset_index()
+        daily_avg = avg_df.drop(columns=["idema"]).groupby(avg_df.index).mean()
         daily_avg = daily_avg.interpolate(method='linear')
     else:
         avg_df = avg_df.drop(columns=['extracted'])

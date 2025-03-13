@@ -38,6 +38,7 @@ def histograms(
         df: pd.DataFrame,
         title: str,
         cols: list,
+        col_labels: list,
         colors: list,
         x_label: str,
         y_label: str = "Frecuencia",
@@ -60,7 +61,7 @@ def histograms(
         fig.add_trace(
             go.Histogram(
                 x=df[col],
-                name=col,
+                name=col_labels[i],
                 nbinsx=nbins,
                 marker_color=colors[i],
                 opacity=0.85,
@@ -74,7 +75,18 @@ def histograms(
         barmode='group',
         bargap=0.1,
         bargroupgap=0,
-        title_x=0.5
+        title_x=0.5,
+        legend=dict(
+            title='',
+            orientation="h",
+            yanchor="bottom",
+            y=-0.6,
+            xanchor="center",
+            x=0.5,
+            traceorder="normal",
+            font=dict(size=12),
+            bgcolor="rgba(255, 255, 255, 0)",
+        )
     )
 
     if len(cols) > 1:
@@ -163,6 +175,7 @@ def time_series(
         df: pd.DataFrame,
         title: str,
         cols: list,
+        col_labels: list,
         colors: list,
         x_label: str = "Fecha",
         y_label: str = "Valor",
@@ -177,7 +190,7 @@ def time_series(
                 x=df.index,
                 y=df[col],
                 mode='lines',
-                name=col,
+                name=col_labels[i],
                 line=dict(color=colors[i]),
                 opacity=opacity
             )
@@ -257,7 +270,7 @@ def bar_plots(
             title='',
             orientation="h",
             yanchor="bottom",
-            y=-0.6,
+            y=-0.8,
             xanchor="center",
             x=0.5,
             traceorder="normal",

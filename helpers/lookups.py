@@ -67,8 +67,6 @@ element_cols_map_numeric = {
     'sol': ['sol']
 }
 
-scatter_cols = ['tmed', 'prec', 'velmedia', 'hr_media', 'pres_max', 'sol']
-
 element_cols_map = {
     'temperatura': ['tmed', 'tmax', 'tmin', 'hora_tmax', 'hora_tmin'],
     'lluvia': ['prec'],

@@ -5,7 +5,7 @@ import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 
 from helpers import api
-from helpers.lookups import element_cols_map_numeric, label_maps, histogram_color_maps, numeric_cols, scatter_cols, \
+from helpers.lookups import element_cols_map_numeric, label_maps, histogram_color_maps, numeric_cols, \
     scatter_color_maps, provincia_lookup, prov_names, offset_map, provincias, estaciones, estacion_lookup, \
     estaciones_df
 from helpers.preprocessing import convert_numeric, log_transform_df
@@ -33,8 +33,6 @@ def show_graphs():
         with st.container(border=True, height=height):
             show_histogram_locations()
 
-    st.markdown("<div style='margin: 10px'></div>", unsafe_allow_html=True)
-
     col3, col4 = st.columns(2)
 
     with col3:
@@ -58,7 +56,7 @@ def show_histograms():
 
     hist = histograms(
         selected_df,
-        title=f"Histograma",
+        title=f"Histograma de Frecuencia de {selected_element}",
         cols=element_cols_map_numeric[selected_element],
         col_labels=[label_maps[col] for col in columns],
         x_label=selected_element.capitalize(),
@@ -72,20 +70,20 @@ def show_scatter_matrix():
 
     compare_var_label = st.selectbox(
         "Seleccionar elemento para comparar con " + selected_element,
-        options=[label_maps[col] for col in scatter_cols if col != selected_element],
+        options=[label_maps[col] for col in numeric_cols if col not in x_cols],
         key=f"{selected_element}_compare_var"
     )
 
-    compare_var = [col for col in scatter_cols if label_maps[col] == compare_var_label][0]
+    compare_var_element = list(label_maps.keys())[list(label_maps.values()).index(compare_var_label)]
 
-    y_cols = [compare_var]
+    y_cols = [col for col in numeric_cols if label_maps[col] == compare_var_label]
 
     x_col_labels = [label_maps[col] for col in x_cols]
     y_col_labels = [label_maps[col] for col in y_cols]
 
     fig = scatter_matrix(
         avg_df,
-        title=f"Correlación entre {selected_element} y {label_maps[compare_var]}",
+        title=f"Correlación entre {selected_element.capitalize()} y {label_maps[compare_var_element]}",
         x_cols=x_cols,
         y_cols=y_cols,
         x_labels=x_col_labels,
@@ -107,7 +105,7 @@ def show_daily_average():
 
     fig = time_series(
         df_element,
-        title=f"Promedio diario",
+        title=f"Promedio diario de {selected_element}",
         cols=columns,
         col_labels=[label_maps[col] for col in columns],
         colors=[histogram_color_maps[col] for col in columns],
@@ -135,7 +133,7 @@ def show_histogram_locations():
 
     fig = bar_plots(
         sorted_data,
-        title=f"Promedio por provincia" if prov_id == "0" else f"Promedio por estación",
+        title=f"Promedio de {selected_element} por provincia" if prov_id == "0" else f"Promedio de {selected_element} por estación",
         cols=cols,
         x_label="",
         y_label="Valor promedio",
@@ -189,46 +187,46 @@ if "rango_historico" not in st.session_state:
 
 rango_historico = st.pills(
     options=list(offset_map.keys())[:-2],
-    label='Rango de la predicción:',
+    label='Rango histórico:',
     key="rango",
     default=st.session_state.rango_historico,
     on_change=lambda: st.session_state.update({"rango_historico": st.session_state.rango})
 )
 
 if rango_historico is None:
-    st.stop()
-
-if 'graficos_df' not in st.session_state:
-    st.header("Aplique los filtros para cargar los datos.")
+    st.write("No se ha seleccionado un rango histórico.")
     st.stop()
 
 df = st.session_state.graficos_df
 fecha_inicial = df.index.max() - timedelta(days=offset_map[rango_historico])
 df = df[df.index >= fecha_inicial]
 
-if len(df) == 0 or df is None:
+if len(df) == 0 or df is None or 'graficos_df' not in st.session_state:
     st.error("No hay datos disponibles para el rango seleccionado.")
+    st.stop()
+
+avg_df = df.copy(deep=True)
+
+if prov_id != "0":
+    dates = avg_df.index
+    avg_df = pd.merge(avg_df, estaciones_df[['idema', 'provincia_id']], on='idema', how='left')
+    avg_df.index = dates
+    avg_df = avg_df.drop(columns=['provincia_id'])
+    avg_df = convert_numeric(avg_df, numeric_cols)
+    if estacion != 'Todas':
+        avg_df = avg_df[avg_df['idema'] == idema]
+    daily_avg = avg_df.drop(columns=["idema"]).groupby(avg_df.index).mean()
+    daily_avg = daily_avg.interpolate(method='linear')
+
 else:
-    avg_df = df.copy(deep=True)
-    if prov_id != "0":
-        dates = avg_df.index
-        avg_df = pd.merge(avg_df, estaciones_df[['idema', 'provincia_id']], on='idema', how='left')
-        avg_df.index = dates
-        avg_df = avg_df.drop(columns=['provincia_id'])
-        avg_df = convert_numeric(avg_df, numeric_cols)
-        if estacion != 'Todas':
-            avg_df = avg_df[avg_df['idema'] == idema]
-        daily_avg = avg_df.drop(columns=["idema"]).groupby(avg_df.index).mean()
-        daily_avg = daily_avg.interpolate(method='linear')
-    else:
-        avg_df = avg_df.drop(columns=['extracted'])
-        avg_df['provincia_id'] = avg_df['provincia_id'].astype(str)
-        avg_df = convert_numeric(avg_df, numeric_cols)
-        avg_df = avg_df[avg_df['provincia_id'] == prov_id] if prov_id != "0" else avg_df
-        daily_avg = avg_df.drop(columns=["provincia_id"]).groupby(avg_df.index).mean()
+    avg_df = avg_df.drop(columns=['extracted'])
+    avg_df['provincia_id'] = avg_df['provincia_id'].astype(str)
+    avg_df = convert_numeric(avg_df, numeric_cols)
+    avg_df = avg_df[avg_df['provincia_id'] == prov_id] if prov_id != "0" else avg_df
+    daily_avg = avg_df.drop(columns=["provincia_id"]).groupby(avg_df.index).mean()
 
 
-    avg_df_log = avg_df.copy(deep=True)
-    avg_df_log = log_transform_df(avg_df_log, numeric_cols)
+avg_df_log = avg_df.copy(deep=True)
+avg_df_log = log_transform_df(avg_df_log, numeric_cols)
 
-    show_graphs()
+show_graphs()

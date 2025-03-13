@@ -5,35 +5,6 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
 
-def histogram(
-        df,
-        title: str,
-        col: str,
-        x_label: str,
-        y_label: str = "Frecuencia"
-) -> go.Figure:
-
-    fig = px.histogram(
-        df,
-        x=col,
-        nbins=20,
-        title=title,
-        labels={col: x_label},
-        template="plotly_white"
-    )
-    fig.update_traces(
-        marker_color='purple',
-        marker_line_color='black',
-        marker_line_width=1.5,
-        opacity=0.85
-    )
-    fig.update_layout(
-        xaxis_title=x_label,
-        yaxis_title=y_label
-    )
-    return fig
-
-
 def histograms(
         df: pd.DataFrame,
         title: str,
@@ -76,6 +47,7 @@ def histograms(
         bargap=0.1,
         bargroupgap=0,
         title_x=0.5,
+        title_xanchor='center',
         legend=dict(
             title='',
             orientation="h",
@@ -166,7 +138,9 @@ def scatter_matrix(
 
     fig.update_layout(
         title=title,
-        showlegend=False
+        showlegend=False,
+        title_x=0.5,
+        title_xanchor='center',
     )
 
     return fig
@@ -200,6 +174,7 @@ def time_series(
         title=title,
         xaxis_tickangle=-45,
         title_x=0.5,
+        title_xanchor='center',
         xaxis_title=x_label,
         yaxis_title=y_label,
         legend=dict(
@@ -259,11 +234,13 @@ def bar_plots(
         col_name = trace.name
         if col_name in label_maps:
             trace.name = label_maps[col_name]
+        # noinspection PyUnresolvedReferences
         trace.marker.color = colors[i]
 
     fig.update_layout(
         xaxis_tickangle=-45,
         title_x=0.5,
+        title_xanchor='center',
         xaxis_title=x_label,
         yaxis_title=y_label,
         legend=dict(

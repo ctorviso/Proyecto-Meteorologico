@@ -26,6 +26,7 @@ def main():
         "Framework": [
             st.Page("src/streamlit_app/Pages/Framework/API Docs.py", title="📜 API Docs"),
             st.Page("src/streamlit_app/Pages/Framework/BBDD.py", title="📑 Esquema BBDD"),
+            st.Page("src/streamlit_app/Pages/Framework/Futuro.py", title="🚀 Ideas a Futuro"),
         ]
     }
 

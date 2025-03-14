@@ -81,6 +81,40 @@ def histograms(
 
 def scatter_matrix(
         df: pd.DataFrame,
+        title: str,
+        x_col: str,
+        y_col: str,
+        x_label: str,
+        y_label: str,
+        color: str,
+) -> go.Figure:
+
+    df = df.dropna(subset=[x_col, y_col])
+
+    fig = px.scatter(
+        df,
+        x=x_col,
+        y=y_col,
+        title=title,
+        template="plotly_white",
+        color_discrete_sequence=[color]
+    )
+
+    fig.add_trace(
+        add_trendline(df, x_col, y_col),
+    )
+
+    fig.update_layout(
+        xaxis_title=x_label,
+        yaxis_title=y_label,
+        title_x=0.5,
+        title_xanchor='center'
+    )
+
+    return fig
+
+def scatter_matrices(
+        df: pd.DataFrame,
         x_cols: list,
         y_cols: list,
         x_labels: list,
@@ -212,7 +246,7 @@ def add_trendline(df, x_col, y_col):
     )
 
 def bar_plots(
-        sorted_data: pd.DataFrame,
+        df_copy: pd.DataFrame,
         title: str,
         cols: list,
         x_label: str,
@@ -220,10 +254,13 @@ def bar_plots(
         label_maps: dict,
         colors: list
 ):
+    df_copy = df_copy.copy()
+
+    df_copy.index = df_copy.index.map(lambda x: x[:15] + '...' if len(x) > 15 else x)
 
     fig = px.bar(
-        sorted_data,
-        x=sorted_data.index,
+        df_copy,
+        x=df_copy.index,
         y=cols,
         title=title,
         labels={'x': x_label, 'y': y_label},

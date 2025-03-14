@@ -23,7 +23,7 @@ selected_element = st.session_state.selected_element
 
 def show_graphs():
     col1, col2 = st.columns(2)
-    height = 580
+    height = 600
 
     with col1:
         with st.container(border=True, height=height):
@@ -66,30 +66,33 @@ def show_histograms():
 
 
 def show_scatter_matrix():
-    x_cols = element_cols_map_numeric[selected_element]
 
-    compare_var_label = st.selectbox(
-        "Seleccionar elemento para comparar con " + selected_element,
-        options=[label_maps[col] for col in numeric_cols if col not in x_cols],
-        key=f"{selected_element}_compare_var"
+    x_label = st.selectbox(
+        "Selecciona elemento de " + selected_element,
+        options=[label_maps[col] for col in numeric_cols if col in element_cols_map_numeric[selected_element]],
+        key=f"{selected_element}_compare_x_label",
+        label_visibility="collapsed"
     )
 
-    compare_var_element = list(label_maps.keys())[list(label_maps.values()).index(compare_var_label)]
+    x_col = [col for col in numeric_cols if label_maps[col] == x_label][0]
 
-    y_cols = [col for col in numeric_cols if label_maps[col] == compare_var_label]
+    y_label = st.selectbox(
+        "Selecciona elemento a comparar",
+        options=[label_maps[col] for col in numeric_cols if col not in element_cols_map_numeric[selected_element]],
+        key=f"{selected_element}_compare_y_label",
+        label_visibility="collapsed"
+    )
 
-    x_col_labels = [label_maps[col] for col in x_cols]
-    y_col_labels = [label_maps[col] for col in y_cols]
+    y_col = [col for col in numeric_cols if label_maps[col] == y_label][0]
 
     fig = scatter_matrix(
         avg_df,
-        title=f"Correlación entre {selected_element.capitalize()} y {label_maps[compare_var_element]}",
-        x_cols=x_cols,
-        y_cols=y_cols,
-        x_labels=x_col_labels,
-        y_labels=y_col_labels,
-        color=scatter_color_maps[selected_element],
-        trendline=True
+        title=f"Correlación entre {x_label} y {y_label}",
+        x_col=x_col,
+        y_col=y_col,
+        x_label=x_label,
+        y_label=y_label,
+        color=scatter_color_maps[selected_element]
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -124,7 +127,6 @@ def show_histogram_locations():
         sorted_data = avg_df.groupby('provincia')[cols].mean().sort_values(by=cols[0])
     else:
         avg_df['estacion'] = avg_df['idema'].apply(lambda x: estaciones[x]['nombre'])
-        avg_df['estacion'] = avg_df['estacion'].apply(lambda x: x[:15] + '...' if len(x) > 15 else x)
         sorted_data = avg_df.groupby('estacion')[cols].mean().sort_values(by=cols[0])
 
     if st.checkbox("MinMax", key=f"{selected_element}_minmax_provincias"):

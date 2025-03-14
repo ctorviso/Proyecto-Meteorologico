@@ -1,11 +1,11 @@
 import streamlit as st
 from src.streamlit_app.background import check_latest
 
-st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:", layout="wide",
-                   initial_sidebar_state="expanded")
-
 
 def main():
+
+    st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:", layout="wide", initial_sidebar_state="expanded")
+
     pages = {
         "Principal": [
             st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Introducción"),

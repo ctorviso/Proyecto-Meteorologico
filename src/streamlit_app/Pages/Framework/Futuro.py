@@ -6,11 +6,11 @@ st.markdown("---")
 tab1, tab2, tab3 = st.tabs(["📊 Resumen Ejecutivo", "👨‍💻 Detalles Técnicos", "🏗️ Arquitectura"])
 
 with tab1:
-    st.header("Plan de Evolución del Proyecto")
+    st.header("Ideas de Evolución del Proyecto (Si se continuara)")
 
     st.markdown("""
-    Nuestro plan de desarrollo se enfoca en cinco áreas clave para mejorar la estabilidad, 
-    rendimiento y escalabilidad del sistema:
+    Si se desea llevar el proyecto a un nivel superior, se realizarían una serie de mejoras y cambios en la arquitectura actual.
+    Aquí se proponen cinco áreas clave para mejorar la estabilidad, rendimiento y escalabilidad del sistema:
     """)
 
     col1, col2 = st.columns(2)

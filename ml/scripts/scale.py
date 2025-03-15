@@ -25,3 +25,11 @@ def scale_df(df: pd.DataFrame, scaler_X, scaler_y) -> pd.DataFrame:
     df_scaled.index = df_unscaled.index
 
     return df_scaled.round(4)
+
+def inverse_predictions(yhat_scaled, y_scaled, scaler_y):
+
+    yhat = scaler_y.inverse_transform(yhat_scaled.reshape(-1, 1))
+    y = scaler_y.inverse_transform(y_scaled.reshape(-1, 1))
+    difference = yhat.flatten() - y.flatten()
+
+    return yhat, y, difference

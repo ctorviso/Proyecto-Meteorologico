@@ -6,6 +6,22 @@ def main():
 
     st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:", layout="wide", initial_sidebar_state="expanded")
 
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] {
+            max-width: 200px;
+        }
+        section[data-testid="stSidebar"] > div:first-child {
+            display: flex;
+            flex-direction: column;
+        }
+        section[data-testid="stSidebarContent"] > div:nth-child(3) {
+            order: -1;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     pages = {
         "Principal": [
             st.Page("src/streamlit_app/Pages/Main/Dashboard.py", title="👋 Introducción"),
@@ -26,7 +42,8 @@ def main():
         "Framework": [
             st.Page("src/streamlit_app/Pages/Framework/API Docs.py", title="📜 API Docs"),
             st.Page("src/streamlit_app/Pages/Framework/BBDD.py", title="📑 Esquema BBDD"),
-            st.Page("src/streamlit_app/Pages/Framework/Futuro.py", title="🚀 Ideas a Futuro"),
+            st.Page("src/streamlit_app/Pages/Framework/Arquitectura.py", title="🏗️ Arquitectura"),
+            #st.Page("src/streamlit_app/Pages/Framework/Futuro.py", title="🚀 Ideas a Futuro"),
         ]
     }
 

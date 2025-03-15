@@ -87,7 +87,8 @@ def show_scatter_matrix():
 
     fig = scatter_matrix(
         avg_df,
-        title=f"Correlación entre {x_label} y {y_label}",
+        title=f"""Correlación entre {x_label}<br>
+          y {y_label}""",
         x_col=x_col,
         y_col=y_col,
         x_label=x_label,

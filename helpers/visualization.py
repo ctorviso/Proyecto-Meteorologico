@@ -89,6 +89,8 @@ def scatter_matrix(
         color: str,
 ) -> go.Figure:
 
+    df = df.copy()
+    df = df.sample(min(500, len(df)))
     df = df.dropna(subset=[x_col, y_col])
 
     fig = px.scatter(

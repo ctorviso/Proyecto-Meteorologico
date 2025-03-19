@@ -72,7 +72,7 @@ with tab1:
 with tab2:
     st.header("Visualización de datos")
 
-    selected_file = st.selectbox("Seleccionar un archivo a visualizar:", [file["name"] for file in files[:8]])
+    selected_file = st.selectbox("Seleccionar un archivo a visualizar:", [file["name"] for file in files if file["name"].endswith(".csv") and "full" not in file["name"]])
 
     selected_url = next(file["url"] for file in files if file["name"] == selected_file)
 
@@ -103,5 +103,3 @@ with tab2:
                 st.error(f"Error en cargar el archivo. Status code: {response.status_code}")
         except Exception as e:
             st.error(f"Error en visualizar el archivo: {str(e)}")
-
-st.markdown("---")

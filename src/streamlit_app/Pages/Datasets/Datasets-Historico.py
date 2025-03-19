@@ -1,7 +1,10 @@
+import numpy as np
 import streamlit as st
 import pandas as pd
 import requests
 from io import StringIO
+
+from sklearn.preprocessing import MinMaxScaler
 
 BASE_URL = "https://rednvrsdcuwtwyfxtjru.supabase.co/storage/v1/object/public/historical"
 
@@ -14,24 +17,24 @@ tab1, tab2, tab3 = st.tabs(["Navegador de Archivos", "Previsualización de Datos
 
 with tab1:
     st.header("Archivos Disponibles")
+    all_files = [f"{year}.csv" for year in years] + [f"{year}_avg.csv" for year in years]
+    all_files.sort()
+    with st.columns(2)[0]:
+        file_name = st.selectbox("Seleccionar Dataset:", all_files, key="year")
 
-    col1, col2 = st.columns(2)
+    if "avg" in file_name:
+        file_url = f"{BASE_URL}/historico_avg/{file_name.replace('_avg', '')}"
+    else:
+        file_url = f"{BASE_URL}/historico/{file_name}"
 
-    with col1:
-        st.subheader("Datos Históricos ('historico')")
-        for year in years:
-            file_url = f"{BASE_URL}/historico/{year}.csv"
-            with st.expander(f"{year}.csv"):
-                st.write(f"Datos historicos para el año {year}")
-                st.markdown(f"[Descargar {year}.csv]({file_url})")
-
-    with col2:
-        st.subheader("Media de Datos Historicos por Provincia ('historico_avg')")
-        for year in years:
-            file_url = f"{BASE_URL}/historico_avg/{year}.csv"
-            with st.expander(f"{year}.csv"):
-                st.write(f"Datos historicos por provincia para el año {year}")
-                st.markdown(f"[Descargar {year}.csv]({file_url})")
+    if st.button("Visualizar y Descargar"):
+        with st.spinner("Cargando archivo..."):
+            file = requests.get(file_url).text
+            if file:
+                data = pd.read_csv(StringIO(file))
+                st.subheader("Muestra de Datos")
+                st.write(data.head(5))
+                st.download_button("Descargar", file, f"{file_name}", "csv")
 
 with tab2:
     st.header("Previsualización de Datos")
@@ -96,18 +99,27 @@ with tab3:
 
                 if all_data:
                     if len(all_data) > 1:
-                        st.subheader("Comparación de Años Seleccionados")
+
+                        st.header("Mapa de Calor")
 
                         for year, df in all_data.items():
-                            st.write(f"**Resumen de {year}:**")
-                            st.write(df.describe())
-                            st.write("---")
+                            st.subheader(year)
 
-                    st.subheader("Datos individuales para cada año (primeras 5 filas)")
-                    for year, df in all_data.items():
-                        st.write(f"**{year}**")
-                        st.write(df.head(5))
-                        st.write("---")
+                            num_cols = df.select_dtypes(include=['float64', 'int64']).columns
+                            corr = df[num_cols].corr()
+                            mask = np.triu(np.ones_like(corr, dtype=bool))
+                            heatmap = corr.style.background_gradient(cmap='coolwarm', axis=None)
+                            heatmap.data = heatmap.data.mask(mask)
+
+                            st.write(heatmap)
+
+                        st.markdown("---")
+
+                        st.header("Resumen de Datos")
+
+                        for year, df in all_data.items():
+                            st.subheader(year)
+                            st.write(df.describe())
 
             except Exception as e:
                 st.error(f"Error al comparar años: {str(e)}")

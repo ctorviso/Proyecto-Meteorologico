@@ -17,9 +17,29 @@ if "graficos_first_run" not in st.session_state:
 
 st.title(":chart_with_upwards_trend: Análisis Exploratorio de Datos")
 
-element_tabs()
-selected_element = st.session_state.selected_element
+data = None
 
+loc_cols = st.columns(2)
+
+with loc_cols[0]:
+    provincia = st.selectbox("Selecciona la provincia", prov_names)
+    prov_id = provincia_lookup[provincia]
+    if 'prov_id' not in st.session_state:
+        st.session_state.prov_id = prov_id
+
+with loc_cols[1]:
+    if prov_id != "0":
+        filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
+        est_names = ['Todas'] + [estaciones[idema]['nombre'] for idema in filtered_idemas]
+        estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
+        if estacion != 'Todas':
+            idema = estacion_lookup[estacion]
+    else:
+        estacion = 'Todas'
+
+st.markdown("---")
+
+selected_element = element_tabs()
 
 def show_graphs():
     col1, col2 = st.columns(2)
@@ -146,44 +166,30 @@ def show_histogram_locations():
 
     st.plotly_chart(fig, use_container_width=True)
 
-data = None
+if prov_id != st.session_state.prov_id or st.session_state.graficos_first_run or 'graficos_df' not in st.session_state:
+    st.session_state.graficos_first_run = False
+    st.session_state.prov_id = prov_id
 
-with st.sidebar:
-    provincia = st.selectbox("Selecciona la provincia", prov_names)
-    prov_id = provincia_lookup[provincia]
-    if 'prov_id' not in st.session_state:
-        st.session_state.prov_id = prov_id
+    with st.spinner("Cargando datos..."):
+        if prov_id != "0":
+            _data = api.get_historico(
+                columns=['fecha', 'idema', 'tmed', 'tmax', 'tmin', 'prec', 'hr_max','hr_media', 'hr_min', 'sol', 'pres_max', 'pres_min', 'velmedia', 'racha'],
+                fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
+                fecha_fin=datetime.now().strftime('%Y-%m-%d'),
+                idemas=filtered_idemas
+            )
 
-    filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
-    est_names = ['Todas'] + [estaciones[idema]['nombre'] for idema in filtered_idemas]
-    estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
-    if estacion != 'Todas':
-        idema = estacion_lookup[estacion]
+        else:
+            _data = api.get_historico_average(
+                fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
+                fecha_fin=datetime.now().strftime('%Y-%m-%d')
+            )
 
-    if prov_id != st.session_state.prov_id or st.session_state.graficos_first_run or 'graficos_df' not in st.session_state:
-        st.session_state.graficos_first_run = False
-        st.session_state.prov_id = prov_id
-
-        with st.spinner("Cargando datos..."):
-            if prov_id != "0":
-                _data = api.get_historico(
-                    columns=['fecha', 'idema', 'tmed', 'tmax', 'tmin', 'prec', 'hr_max','hr_media', 'hr_min', 'sol', 'pres_max', 'pres_min', 'velmedia', 'racha'],
-                    fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
-                    fecha_fin=datetime.now().strftime('%Y-%m-%d'),
-                    idemas=filtered_idemas
-                )
-
-            else:
-                _data = api.get_historico_average(
-                    fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
-                    fecha_fin=datetime.now().strftime('%Y-%m-%d')
-                )
-
-            _df = pd.DataFrame(_data)
-            _df['fecha'] = pd.to_datetime(_df['fecha'], errors='coerce')
-            _df = _df.sort_values('fecha')
-            _df = _df.set_index('fecha')
-            st.session_state.graficos_df = _df
+        _df = pd.DataFrame(_data)
+        _df['fecha'] = pd.to_datetime(_df['fecha'], errors='coerce')
+        _df = _df.sort_values('fecha')
+        _df = _df.set_index('fecha')
+        st.session_state.graficos_df = _df
 
 if "rango_historico" not in st.session_state:
     st.session_state.rango_historico = list(offset_map.keys())[0]

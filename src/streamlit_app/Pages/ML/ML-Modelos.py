@@ -23,42 +23,43 @@ if "ml_first_run" not in st.session_state:
 
 st.title(":brain: Predicciones ML")
 
-with st.sidebar:
+cols = st.columns(2)
 
-    provincia = st.selectbox("Selecciona la provincia", prov_names[1:])
+with cols[0]:
+    provincia = st.selectbox("Selecciona la provincia", prov_names[1:], index=14)
     prov_id = provincia_lookup[provincia]
     if 'prov_id' not in st.session_state:
         st.session_state.prov_id = prov_id
 
+with cols[1]:
     filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
     est_names = ['Todas'] + [estaciones[idema]['nombre'] for idema in filtered_idemas]
     estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
     if estacion != 'Todas':
         idema = estacion_lookup[estacion]
+    
+if prov_id != st.session_state.prov_id or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
+    st.session_state.ml_first_run = False
+    st.session_state.prov_id = prov_id
+    
+    with st.spinner("Cargando datos..."):
+        _ml_data = api.get_historico(
+            columns=['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'],
+            fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
+            fecha_fin=datetime.now().strftime('%Y-%m-%d'),
+            idemas=filtered_idemas
+        )
 
-    
-    if prov_id != st.session_state.prov_id or st.session_state.ml_first_run or 'ml_df' not in st.session_state:
-        st.session_state.ml_first_run = False
-        st.session_state.prov_id = prov_id
-    
-        with st.spinner("Cargando datos..."):
-            _ml_data = api.get_historico(
-                columns=['fecha', 'idema', 'tmed', 'prec', 'tmin', 'tmax', 'hr_max','hr_media'],
-                fecha_ini=(datetime.now() - timedelta(days=offset_map[list(offset_map.keys())[-3]])).strftime('%Y-%m-%d'),
-                fecha_fin=datetime.now().strftime('%Y-%m-%d'),
-                idemas=filtered_idemas
-            )
-    
-            _df = pd.DataFrame(_ml_data)
-            _df = _df.sort_values('fecha')
-            idemas = _df['idema']
-            _df = clean.clean_df(_df)
-            _df = impute.impute_knn(_df)
-            _df['idema'] = idemas
-    
-            st.session_state.ml_df = _df
-    
-        st.rerun()
+        _df = pd.DataFrame(_ml_data)
+        _df = _df.sort_values('fecha')
+        idemas = _df['idema']
+        _df = clean.clean_df(_df)
+        _df = impute.impute_knn(_df)
+        _df['idema'] = idemas
+
+        st.session_state.ml_df = _df
+
+    st.rerun()
 
 if "rango_historico" not in st.session_state:
     st.session_state.rango_historico = list(offset_map.keys())[0]

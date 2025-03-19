@@ -1,31 +1,24 @@
 from datetime import datetime, timedelta
 import pandas as pd
 import streamlit as st
-from sklearn.preprocessing import MinMaxScaler
 from helpers import api
-from helpers.lookups import element_cols_map_numeric, label_maps, choropleth_color_maps, provincias, \
-    histogram_color_maps, offset_map, elements, provincias_df
-from helpers.lookups import numeric_cols
 from helpers.geojson import inject_col_values, get_geodata_provincias
+from helpers.lookups import element_cols_map_numeric, label_maps, choropleth_color_maps, offset_map, provincias_df
+from helpers.lookups import numeric_cols
 from helpers.preprocessing import convert_numeric
-from helpers.visualization import bar_plots, choropleth_map
-from src.streamlit_app.Pages.EDA.Graficos import selected_element
+from helpers.visualization import choropleth_map
+from src.streamlit_app.components.tabs import element_tabs
 
 if "mapa_first_run" not in st.session_state:
     st.session_state.mapa_first_run = True
 
 st.title(":world_map: Mapa Coroplético")
 
-with st.sidebar:
-    selected_element = st.selectbox(options=[element.capitalize() for element in elements], label='Elemento')
-    selected_element = selected_element.lower()
-    variables = element_cols_map_numeric[selected_element]
-    if len(variables) > 1:
-        selected_column = st.radio(options=variables, label='Variable')
-    else:
-        selected_column = variables[0]
+selected_element = element_tabs()
 
-    st.session_state.selected_element = selected_element
+variables = element_cols_map_numeric[selected_element]
+
+selected_column = variables[0]
 
 if st.session_state.mapa_first_run or 'df' not in st.session_state:
     st.session_state.mapa_first_run = False
@@ -87,7 +80,6 @@ def show_choropleth_map():
     st.plotly_chart(fig, use_container_width=True, config={
         'displayModeBar': False,
         'scrollZoom': False,
-
     })
 
 if st.session_state.selected_element:

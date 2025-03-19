@@ -8,15 +8,15 @@ def main():
 
     st.markdown("""
     <style>
+        :root {
+            --primary-color: #00AEEF;
+            --background-color: #121212;
+            --secondary-background-color: #1E1E1E;
+            --text-color: #E0E0E0;
+            --font: sans-serif;
+        }
         [data-testid="stSidebar"] {
             max-width: 200px;
-        }
-        section[data-testid="stSidebar"] > div:first-child {
-            display: flex;
-            flex-direction: column;
-        }
-        section[data-testid="stSidebarContent"] > div:nth-child(3) {
-            order: -1;
         }
     }
     </style>

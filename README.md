@@ -2,12 +2,10 @@
 
 ### Setup:
 
-#### Renombrar '.env.example' a '.env'
-
-#### Crear un entorno virtual y instalar requirements.txt
-
-### Ejecución:
-
 ```sh
+cp .env.example .env
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ./run.sh
 ```

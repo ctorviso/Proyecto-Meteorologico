@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 
 def histograms(
@@ -90,7 +89,7 @@ def scatter_matrix(
 ) -> go.Figure:
 
     df = df.copy()
-    df = df.sample(min(500, len(df)))
+    df = df.sample(min(500, len(df)), random_state=42)
     df = df.dropna(subset=[x_col, y_col])
 
     fig = px.scatter(
@@ -102,9 +101,14 @@ def scatter_matrix(
         color_discrete_sequence=[color]
     )
 
-    fig.add_trace(
-        add_trendline(df, x_col, y_col),
-    )
+    fig.add_trace(add_trendline(df, x_col, y_col))
+
+    if len(df) >= 500:
+        scatter_size = 4
+    else:
+        scatter_size = 6
+
+    fig.update_traces(marker=dict(size=scatter_size))
 
     fig.update_layout(
         xaxis_title=x_label,
@@ -115,81 +119,16 @@ def scatter_matrix(
 
     return fig
 
-def scatter_matrices(
-        df: pd.DataFrame,
-        x_cols: list,
-        y_cols: list,
-        x_labels: list,
-        y_labels: list,
-        title: str,
-        color: str,
-        trendline: bool
-) -> go.Figure:
-
-    df = df.copy()
-    df = df.sample(min(500, len(df)))
-    df = df.dropna(subset=x_cols + y_cols)
-
-    fig = make_subplots(
-        rows=len(y_cols),
-        cols=len(x_cols),
-        shared_xaxes=True,
-        shared_yaxes=True,
-        horizontal_spacing=0.02,
-        vertical_spacing=0.02
-    )
-
-    for i, y_col in enumerate(y_cols):
-        y_label = y_labels[i]
-        for j, x_col in enumerate(x_cols):
-            x_label = x_labels[j]
-
-            fig.add_trace(
-                go.Scatter(
-                    x=df[x_col],
-                    y=df[y_col],
-                    mode='markers',
-                    marker=dict(
-                        color=color,
-                        size=5,
-                        opacity=0.5
-                    ),
-                    name=f"{x_label} vs {y_label}"
-                ),
-                row=i + 1,
-                col=j + 1
-            )
-
-            if trendline:
-                fig.add_trace(
-                    add_trendline(df, x_col, y_col),
-                    row = i + 1,
-                    col = j + 1
-                )
-
-            if i == len(y_cols) - 1:
-                fig.update_xaxes(title_text=x_label, row=i + 1, col=j + 1)
-            if j == 0:
-                fig.update_yaxes(title_text=y_label, row=i + 1, col=j + 1)
-
-    fig.update_layout(
-        title=title,
-        showlegend=False,
-        title_x=0.5,
-        title_xanchor='center',
-    )
-
-    return fig
-
 def time_series(
         df: pd.DataFrame,
         title: str,
         cols: list,
         col_labels: list,
         colors: list,
+        moving_avg: bool,
         x_label: str = "Fecha",
         y_label: str = "Valor",
-        opacity: float = 0.85
+        opacity: float = 0.85,
 ) -> go.Figure:
 
     fig = go.Figure()
@@ -205,6 +144,31 @@ def time_series(
                 opacity=opacity
             )
         )
+
+        if moving_avg:
+            window_size = max(len(df) // 50, 20)
+
+            rolling_avg = df[col].rolling(window=window_size, center=True).mean()
+
+            first_valid = rolling_avg.first_valid_index()
+            last_valid = rolling_avg.last_valid_index()
+
+            if first_valid is not None:
+                rolling_avg.loc[:first_valid] = rolling_avg.loc[first_valid]
+            if last_valid is not None:
+                rolling_avg.loc[last_valid:] = rolling_avg.loc[last_valid]
+
+            fig.add_trace(
+                go.Scatter(
+                    x=df.index,
+                    y=rolling_avg,
+                    mode='lines',
+                    name=f"{col_labels[i]} Media Móvil",
+                    line=dict(color='white', width=1, dash='dot'),
+                    opacity=1,
+                    showlegend=False
+                )
+            )
 
     fig.update_layout(
         title=title,
@@ -223,7 +187,8 @@ def time_series(
             traceorder="normal",
             font=dict(size=12),
             bgcolor="rgba(255, 255, 255, 0)",
-        )
+        ),
+        showlegend=len(cols) > 1
     )
 
     return fig

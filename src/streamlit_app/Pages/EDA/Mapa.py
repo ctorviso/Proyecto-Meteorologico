@@ -38,8 +38,19 @@ if st.session_state.mapa_first_run or 'df' not in st.session_state:
     st.rerun()
 
 
-rango_historico = st.pills(options=dict(list(offset_map.items())[:-2]), label='Rango histórico:', key="rango", default=list(offset_map.keys())[0])
+if "rango_historico" not in st.session_state:
+    st.session_state.rango_historico = list(offset_map.keys())[1]
+
+rango_historico = st.pills(
+    options=list(offset_map.keys())[:-2],
+    label='Rango histórico:',
+    key="rango",
+    default=st.session_state.rango_historico,
+    on_change=lambda: st.session_state.update({"rango_historico": st.session_state.rango})
+)
+
 if rango_historico is None:
+    st.write("No se ha seleccionado un rango histórico.")
     st.stop()
 
 avg_df = st.session_state.df if 'df' in st.session_state else None
@@ -54,8 +65,6 @@ avg_df = avg_df[avg_df['fecha'] >= fecha_inicial]
 avg_df = avg_df.groupby('provincia_id').mean().reset_index().drop(columns=['fecha'])
 avg_df['provincia_id'] = avg_df['provincia_id'].astype(str)
 avg_df['provincia'] = pd.merge(avg_df, provincias_df[['provincia', 'provincia_id']], on='provincia_id', how='left')['provincia']
-
-
 
 geojson = get_geodata_provincias()
 geojson['features'] = [f for f in geojson['features'] if f['properties']['provincia_id'] not in ['35', '38']]

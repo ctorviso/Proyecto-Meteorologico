@@ -89,7 +89,11 @@ def show_scatter_matrix():
 
     x_label = st.selectbox(
         "Selecciona elemento de " + selected_element,
-        options=[label_maps[col] for col in numeric_cols if col in element_cols_map_numeric[selected_element]],
+        options=[
+            label_maps[col] for col in numeric_cols \
+            if col in element_cols_map_numeric[selected_element] \
+            and len(avg_df[col].dropna()) > 0
+            ],
         key=f"{selected_element}_compare_x_label",
         label_visibility="collapsed"
     )
@@ -98,7 +102,11 @@ def show_scatter_matrix():
 
     y_label = st.selectbox(
         "Selecciona elemento a comparar",
-        options=[label_maps[col] for col in numeric_cols if col not in element_cols_map_numeric[selected_element]],
+        options=[
+            label_maps[col] for col in numeric_cols \
+            if col not in element_cols_map_numeric[selected_element] \
+            and len(avg_df[col].dropna()) > 0
+            ],
         key=f"{selected_element}_compare_y_label",
         label_visibility="collapsed"
     )
@@ -120,12 +128,23 @@ def show_scatter_matrix():
 
 def show_daily_average():
 
-    if st.checkbox("MinMax", key=f"{selected_element}_minmax"):
-        scaler = MinMaxScaler()
-        daily_avg[numeric_cols] = scaler.fit_transform(daily_avg[numeric_cols])
+    da_cols = st.columns(2)
+
+    with da_cols[0]:
+        if st.checkbox("MinMax", key=f"{selected_element}_minmax"):
+            scaler = MinMaxScaler()
+            daily_avg[numeric_cols] = scaler.fit_transform(daily_avg[numeric_cols])
+
 
     columns = element_cols_map_numeric[selected_element]
     df_element = daily_avg[columns]
+
+    with da_cols[1]:
+        if len(df_element) > 20:
+            moving_avg = st.checkbox("Media móvil", key=f"{selected_element}_moving_avg", value=True)
+        else:
+            moving_avg = False
+
 
     fig = time_series(
         df_element,
@@ -134,7 +153,8 @@ def show_daily_average():
         col_labels=[label_maps[col] for col in columns],
         colors=[histogram_color_maps[col] for col in columns],
         x_label="Fecha",
-        y_label=selected_element
+        y_label=selected_element,
+        moving_avg=moving_avg
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -192,7 +212,7 @@ if prov_id != st.session_state.prov_id or st.session_state.graficos_first_run or
         st.session_state.graficos_df = _df
 
 if "rango_historico" not in st.session_state:
-    st.session_state.rango_historico = list(offset_map.keys())[0]
+    st.session_state.rango_historico = list(offset_map.keys())[1]
 
 rango_historico = st.pills(
     options=list(offset_map.keys())[:-2],
@@ -237,5 +257,9 @@ else:
 
 avg_df_log = avg_df.copy(deep=True)
 avg_df_log = log_transform_df(avg_df_log, numeric_cols)
+
+if len(avg_df) == 0 or len(avg_df[element_cols_map_numeric[selected_element]].dropna()) == 0:
+    st.error("No hay datos disponibles para los filtros seleccionado.")
+    st.stop()
 
 show_graphs()

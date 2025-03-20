@@ -34,7 +34,7 @@ with cols[0]:
 with cols[1]:
     filtered_idemas = [idema for idema, value in estaciones.items() if str(value['provincia_id']) == str(prov_id)]
     est_names = ['Todas'] + [estaciones[idema]['nombre'] for idema in filtered_idemas]
-    estacion = st.selectbox("Selecciona la estación meteorológica", est_names)
+    estacion = st.selectbox("Selecciona la estación meteorológica", est_names, index=min(4, len(est_names) - 1))
     if estacion != 'Todas':
         idema = estacion_lookup[estacion]
     
@@ -62,7 +62,7 @@ if prov_id != st.session_state.prov_id or st.session_state.ml_first_run or 'ml_d
     st.rerun()
 
 if "rango_historico" not in st.session_state:
-    st.session_state.rango_historico = list(offset_map.keys())[0]
+    st.session_state.rango_historico = list(offset_map.keys())[1]
 
 rango_historico = st.pills(
     options=list(offset_map.keys())[:-2],

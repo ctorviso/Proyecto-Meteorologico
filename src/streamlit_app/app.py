@@ -4,17 +4,23 @@ from src.streamlit_app.background import check_latest
 
 def main():
 
-    st.set_page_config(page_title="Análisis Meteorológico", page_icon=":lightning:", layout="wide", initial_sidebar_state="expanded")
+    st.set_page_config(
+        page_title="Análisis Meteorológico",
+        page_icon=":lightning:",
+        layout="wide",
+        initial_sidebar_state="expanded",
+        menu_items={
+            "Report a bug": "https://github.com/HAB-Equipo-Meteorologia/Proyecto-Meteorologico/issues",
+            "About":
+            """Proyecto Final de Bootcamp de HACK A BOSS \
+            \nAnálisis Meteorológico de datos históricos y predicciones futuras con datos de la AEMET \
+            \n\nRepositorio: [GitHub](https://github.com/HAB-Equipo-Meteorologia/Proyecto-Meteorologico) \
+            """
+        }
+    )
 
     st.markdown("""
     <style>
-        :root {
-            --primary-color: #00AEEF;
-            --background-color: #121212;
-            --secondary-background-color: #1E1E1E;
-            --text-color: #E0E0E0;
-            --font: sans-serif;
-        }
         [data-testid="stSidebar"] {
             max-width: 200px;
         }

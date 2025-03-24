@@ -80,10 +80,10 @@ def pipeline():
     col1, col2, _ = st.columns(3)
 
     col1.markdown("##### Características Seleccionadas")
-    col1.write(pd.read_csv(os.path.join(script_dir, "../data/model_res/feature_selection/cols_conservadas.csv")))
+    col1.dataframe(pd.read_csv(os.path.join(script_dir, "../data/model_res/feature_selection/cols_conservadas.csv")), hide_index=True, width=200)
 
     col2.markdown("##### Características Eliminadas")
-    col2.write(pd.read_csv(os.path.join(script_dir, "../data/model_res/feature_selection/cols_eliminadas.csv")))
+    col2.dataframe(pd.read_csv(os.path.join(script_dir, "../data/model_res/feature_selection/cols_eliminadas.csv")), hide_index=True, width=200)
 
     st.markdown("---")
 
@@ -97,7 +97,7 @@ def pipeline():
     - Este enfoque previene la filtración de datos entre conjuntos, ya que solo utiliza datos del mismo día
     - Columnas imputadas y sus porcentajes de valores faltantes:
     """)
-    st.write(pd.read_csv(os.path.join(script_dir, "../data/model_res/feature_selection/nans.csv")))
+    st.dataframe(pd.read_csv(os.path.join(script_dir, "../data/model_res/feature_selection/nans.csv")), hide_index=True)
     st.markdown("""
     ---
     #### 5. División Train-Validation-Test:
@@ -156,16 +156,47 @@ def results():
     st.markdown("---")
     st.header("Resultados de los Modelos")
 
+    st.dataframe(metrics_df, width=400, hide_index=True)
+    st.markdown("_Todos los valores de las métricas están normalizados entre 0 y 1_")
+
+    st.markdown("---")
+
     st.markdown("##### Métricas de Evaluación:")
 
-    st.write(metrics_df)
+    mse, rmse, mae, r2 = st.columns(4)
 
-    st.markdown(""" 
-    * **MSE**: Error Cuadrático Medio. Mide la media de los errores al cuadrado, es decir, cuánto se desvían las predicciones de los valores reales en promedio, elevando esas diferencias al cuadrado. Cuanto más bajo es el MSE, mejor es el ajuste del modelo.
-    * **MAE**: Error Absoluto Medio. Mide el promedio de la magnitud de los errores, es decir, la diferencia promedio absoluta entre las predicciones y los valores reales. Cuanto más bajo es el MAE, más cerca están las predicciones de los valores reales.
-    * **RMSE**: Raíz del Error Cuadrático Medio. Es la raíz cuadrada del MSE y se interpreta de la misma manera. Devuelve el error en la misma escala que los datos originales y, como el MSE, penaliza más los errores grandes.
-    * **R2**: Coeficiente de Determinación. Indica qué proporción de la variabilidad de los datos está explicada por el modelo. El R2 está entre 0 y 1. Un valor de 1 significa una predicción perfecta, mientras que un valor de 0 significa que el modelo no consigue capturar bien la relación entre las variables.
-    """)
+    with mse:
+        st.subheader("MSE")
+        st.markdown("""
+        - **Error Cuadrático Medio**
+        - Media de los errores al cuadrado
+        - Mide cuánto se desvían las predicciones de los valores reales en promedio, elevando esas diferencias al cuadrado.
+        - Cuanto más bajo es el MSE, mejor es la precisión del modelo.
+        """)
+
+    with rmse:
+        st.subheader("RMSE")
+        st.markdown("""
+        -  **Raíz del Error Cuadrático Medio**
+        - Raíz cuadrada de la media de los errores al cuadrado
+        - Es la raíz cuadrada del MSE y mide cuánto se desvían las predicciones de los valores reales en promedio.
+        - Cuanto más bajo es el RMSE, mejor es la precisión del modelo.
+        """)
+    with mae:
+        st.subheader("MAE")
+        st.markdown("""
+        - **Error Absoluto Medio**
+        - Promedio de la magnitud de los errores
+        - Mide la diferencia promedia absoluta entre las predicciones y los valores reales.
+        - Cuanto más bajo es el MAE, mejor es la precisión del modelo.
+        """)
+    with r2:
+        st.subheader("R²")
+        st.markdown("""
+        - **Coeficiente de determinación**
+        - Proporción de la variabilidad de los datos que está explicada por el modelo**
+        -  Cuanto más alto es el R², mejor el modelo explica la variabilidad de los datos.
+        """)
 
     st.markdown("---")
     st.markdown("### Análisis de Resultados")
@@ -173,7 +204,7 @@ def results():
     st.markdown("Ambos GRU y LSTM cuentan con un MSE y RMSE bajo, y un R2 superior a los demás. \
     En este caso, los resultados son muy similares, lo cual no se puede claramente determinar cuál es mejor. \
     Ambos modelos son capaces de capturar patrones complejos en los datos, \
-    y explican más del 60% de la variabilidad de los datos. \
+    y explican casi el 70% de la variabilidad de los datos. \
     ")
     st.markdown("SimpleRNN Muestra un MSE y un RMSE algo más alto que GRU y LSTM, \
     y su R2 también es ligeramente inferior. \
@@ -182,12 +213,13 @@ def results():
     especialmente si se tiene en cuenta que es el más sencillo de los tres RNNs. \
     ")
     st.markdown(
-    "Prophet, aunque presente un MSE y RMSE relativamente alto en comparación con los modelos de RNN, \
-    el MAE es el más bajo, lo que sugiere que la mayoría de las predicciones están bastante cerca de los valores reales. \
-    Esto es debido a que es un modelo que mide más la media en lugar de valores específicos, \
-    por lo que es más robusto a los outliers. \
-    Su R2 también está ligeramente por debajo de los modelos de RNN, \
-    no obstante, sigue explicando más de la mitad de la variabilidad de los datos.")
+    "Prophet presenta un MSE y RMSE relativamente alto en comparación con los modelos de RNN. \
+    Aun así, su R2 en comparación está solo ligeramente por debajo de los demás, \
+    y sigue explicando más del 65% de la variabilidad de los datos. \
+    Estos resultados son debido a que, a diferencia de los demás modelos, solo usa la fecha y el variable objetivo para entrenar. \
+    Esto hace que sea un modelo de promedio móvil en lugar de uno que predice valores específicos según otros variables. \
+    Sin embargo, esto mismo lo más robusto a los outliers ya que se desvía poco de la media. \
+    ")
 
     st.markdown("---")
     st.markdown("### Visualización de Resultados")

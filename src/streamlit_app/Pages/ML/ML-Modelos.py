@@ -107,7 +107,7 @@ def load_lstm():
 
 @st.cache_resource
 def load_prophet():
-    url = "https://rednvrsdcuwtwyfxtjru.supabase.co/storage/v1/object/public/ml//prophet.pkl"
+    url = "https://rednvrsdcuwtwyfxtjru.supabase.co/storage/v1/object/public/ml//prophet.joblib"
 
     try:
         response = requests.get(url, timeout=20)

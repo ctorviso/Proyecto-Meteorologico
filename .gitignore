@@ -12,3 +12,4 @@ logs/
 .coverage
 data/historical
 .lct
+/data/ml/

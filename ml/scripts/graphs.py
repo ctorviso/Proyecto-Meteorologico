@@ -126,7 +126,7 @@ def daily_stats_comparison(model_name, daily_stats):
         go.Scatter(
             x=daily_stats['fecha'],
             y=daily_stats['actual_mean'],
-            mode='lines+markers',
+            mode='lines',
             name='Temperatura Real',
             line=dict(color='blue'),
         ),
@@ -150,7 +150,7 @@ def daily_stats_comparison(model_name, daily_stats):
         go.Scatter(
             x=daily_stats['fecha'],
             y=daily_stats['predicted_mean'],
-            mode='lines+markers',
+            mode='lines',
             name='Temperatura Predicha',
             line=dict(color='red'),
         ),

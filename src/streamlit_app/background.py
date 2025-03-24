@@ -3,32 +3,41 @@ from helpers import api
 from helpers.config import script_dir
 import os
 
+from helpers.logger import setup_logger
+
 lct_path = os.path.join(script_dir, '../src/streamlit_app/.lct')
+logger = setup_logger('background')
 
 def last_check_time() -> datetime:
-    if not os.path.exists(os.path.join(script_dir, lct_path)):
-        update_last_check_time()
-        return datetime.now(timezone.utc)
+    if not os.path.exists(lct_path):
+        logger.info(f'Last check time file not found.')
+        return None
 
     with open(lct_path, 'r') as f:
-        if not f.read() or f.read() == '':
-            update_last_check_time()
-            return datetime.now(timezone.utc)
+        contents = f.read()
+        if not contents or contents.isspace():
+            logger.info(f'Last check time file empty.')
+            return None
 
-        return datetime.fromisoformat(f.read())
+        return datetime.fromisoformat(contents)
 
 def update_last_check_time():
     with open(lct_path, 'w') as f:
+        logger.info(f'Updating last check time.')
         f.write(datetime.now(timezone.utc).isoformat())
+        logger.info(f'Last check time updated to {datetime.now(timezone.utc)}.')
 
 def check_latest():
-    if datetime.now(timezone.utc) - last_check_time() < timedelta(minutes=60):
+    logger.info(f'Checking latest data.')
+    lct = last_check_time()
+    if lct and datetime.now(timezone.utc) - lct < timedelta(minutes=60):
+        logger.info(f'Last check was less than 60 minutes ago. Skipping.')
         return
 
-    res = api.get_latest_fetch()
-    if res:
-        fetched_time = datetime.fromisoformat(res['fetched'])
-        if datetime.now(timezone.utc) - fetched_time > timedelta(hours=1):
-            api.fetch_latest()
+    if not lct:
+        logger.info(f'Last check time not found. Fetching latest data.')
 
+    logger.info(f'Last check was more than 60 minutes ago. Fetching latest data.')
+    api.fetch_latest()
+    logger.info(f'Latest data requested.')
     update_last_check_time()
